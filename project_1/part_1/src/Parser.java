@@ -30,53 +30,72 @@ public class Parser {
         }
     }
 
+    private int parser_evaluator(int digit) {
+        return digit - '0';
+    }
+
     private void parser_goal() throws ParseError {
         parser_token_consumer(this.token);
-        parser_expr();
+        int resultValue = parser_expr(0);
         // Check for EOF
         if (this.token != '\0') {
             throw new ParseError();
         }
         System.out.println("parse successful");
+        System.out.println(resultValue);
     }
 
-    private void parser_expr() throws ParseError {
-        parser_term();
-        parser_expr2();
+    private int parser_expr(int result) throws ParseError {
+        result = parser_term(result);
+        result = parser_expr2(result);
+        return result;
     }
 
 
-    private void parser_expr2() throws ParseError {
+    private int parser_expr2(int result) throws ParseError {
         // Check for EOF
         if (this.token == '\0') {
-            return;
+            return result;
         }
-        if (this.token == '+' || this.token == '-') {
+        if (this.token == '+' ) {
             parser_token_consumer(this.token);
-            parser_term();
-            parser_expr2();
+            result += parser_term(result);
+            result = parser_expr2(result);
         }
+        else if(this.token == '-'){
+            parser_token_consumer(this.token);
+            result -= parser_term(result);
+            result = parser_expr2(result);
+        }
+        return result;
     }
 
-    private void parser_term() throws ParseError {
-        parser_factor();
-        parser_term2();
+    private int parser_term(int result) throws ParseError {
+        result = parser_factor(result);
+        result = parser_term2(result);
+        return result;
     }
 
-    private void parser_term2() throws ParseError {
+    private int parser_term2(int result) throws ParseError {
         // Check for EOF
         if (this.token == '\0') {
-            return;
+            return result;
         }
         // Check for '*' and '/' literals
-        if (this.token == '*' || this.token == '/') {
+        if (this.token == '*') {
             parser_token_consumer(this.token);
-            parser_factor();
-            parser_term2();
+            result *= parser_factor(result);
+            result = parser_term2(result);
+
+        } else if(this.token == '/') {
+            parser_token_consumer(this.token);
+            result = result /parser_factor(result);
+            result = parser_term2(result);
         }
+        return result;
     }
 
-    private void parser_factor() throws ParseError {
+    private int parser_factor(int result) throws ParseError {
         // Check for EOF
         if (this.token == '\0') {
             throw new ParseError();
@@ -84,19 +103,22 @@ public class Parser {
         // Check for '(' literal
         if (this.token == '(') {
             parser_token_consumer(this.token);
-            parser_expr();
+            result = parser_expr(result);
             // Check if parenthesis is closing with ')' literal
             if (this.token != ')') {
                 throw new ParseError();
             }
             parser_token_consumer(this.token);
+            return result;
         }
         else {
             // Check if the token is number between 0 and 9
             if (this.token < '0' || this.token > '9') {
                 throw new ParseError();
             }
+            result = parser_evaluator(this.token);
             parser_token_consumer(this.token);
+            return result;
         }
     }
 }

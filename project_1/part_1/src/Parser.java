@@ -1,5 +1,3 @@
-import java.io.IOException;
-
 public class Parser {
     private String input;
     private char token;
@@ -7,17 +5,14 @@ public class Parser {
     private int tokenNumber;
 
     public void parser(String userInput) {
-//        System.out.println(userInput);
         this.input = userInput;
         this.inputLength = userInput.length();
         this.tokenNumber = 0;
-
         try {
             parser_goal();
         } catch (ParseError err) {
             System.err.println(err.getMessage());
         }
-
     }
 
     private void parser_token_consumer(int symbol) throws ParseError {
@@ -25,6 +20,7 @@ public class Parser {
             throw new ParseError();
         }
         // If we have read the whole input, assign '\0' to token
+        // Else consume next character from input buffer
         if(this.tokenNumber == this.inputLength) {
             this.token = '\0';
         }
@@ -37,6 +33,7 @@ public class Parser {
     private void parser_goal() throws ParseError {
         parser_token_consumer(this.token);
         parser_expr();
+        // Check for EOF
         if (this.token != '\0') {
             throw new ParseError();
         }
@@ -50,6 +47,7 @@ public class Parser {
 
 
     private void parser_expr2() throws ParseError {
+        // Check for EOF
         if (this.token == '\0') {
             return;
         }
@@ -66,9 +64,11 @@ public class Parser {
     }
 
     private void parser_term2() throws ParseError {
+        // Check for EOF
         if (this.token == '\0') {
             return;
         }
+        // Check for '*' and '/' literals
         if (this.token == '*' || this.token == '/') {
             parser_token_consumer(this.token);
             parser_factor();
@@ -77,17 +77,26 @@ public class Parser {
     }
 
     private void parser_factor() throws ParseError {
-//        if (this.token == '(') {
-//            parser_token_consumer();
-//            if (this.token == ')')
-//                parser_expr();
-//        }
+        // Check for EOF
         if (this.token == '\0') {
             throw new ParseError();
         }
-        if (this.token < '0' || this.token > '9') {
-            throw new ParseError();
+        // Check for '(' literal
+        if (this.token == '(') {
+            parser_token_consumer(this.token);
+            parser_expr();
+            // Check if parenthesis is closing with ')' literal
+            if (this.token != ')') {
+                throw new ParseError();
+            }
+            parser_token_consumer(this.token);
         }
-        parser_token_consumer(this.token);
+        else {
+            // Check if the token is number between 0 and 9
+            if (this.token < '0' || this.token > '9') {
+                throw new ParseError();
+            }
+            parser_token_consumer(this.token);
+        }
     }
 }

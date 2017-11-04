@@ -6,11 +6,12 @@ public class Main {
         Parser parser = new Parser();
         Scanner scanner = new Scanner(System.in);
         String input;
-        // Read lines
-        // TODO add exception to handle ctrl+D to terminate gracefully
-        while ((input= scanner.nextLine()) != null) {
-            System.out.println(input);
-//            parser.parser(input);
+        // Read input
+        while (scanner.hasNextLine()) {
+            input = scanner.nextLine();
+//            System.out.println(input);
+            parser.parser(input);
         }
+        scanner.close();
     }
 }

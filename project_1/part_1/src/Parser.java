@@ -15,10 +15,7 @@ public class Parser {
         }
     }
 
-    private void parser_token_consumer(int symbol) throws ParseError {
-        if (this.token != symbol) {
-            throw new ParseError();
-        }
+    private void parser_token_consumer() throws ParseError {
         // If we have read the whole input, assign '\0' to token
         // Else consume next character from input buffer
         if(this.tokenNumber == this.inputLength) {
@@ -35,7 +32,7 @@ public class Parser {
     }
 
     private void parser_goal() throws ParseError {
-        parser_token_consumer(this.token);
+        parser_token_consumer();
         int resultValue = parser_expr(0);
         // Check for EOF
         if (this.token != '\0') {
@@ -58,12 +55,12 @@ public class Parser {
             return result;
         }
         if (this.token == '+' ) {
-            parser_token_consumer(this.token);
+            parser_token_consumer();
             result += parser_term(result);
             result = parser_expr2(result);
         }
         else if(this.token == '-'){
-            parser_token_consumer(this.token);
+            parser_token_consumer();
             result -= parser_term(result);
             result = parser_expr2(result);
         }
@@ -83,12 +80,12 @@ public class Parser {
         }
         // Check for '*' and '/' literals
         if (this.token == '*') {
-            parser_token_consumer(this.token);
+            parser_token_consumer();
             result *= parser_factor(result);
             result = parser_term2(result);
 
         } else if(this.token == '/') {
-            parser_token_consumer(this.token);
+            parser_token_consumer();
             result = result /parser_factor(result);
             result = parser_term2(result);
         }
@@ -102,13 +99,13 @@ public class Parser {
         }
         // Check for '(' literal
         if (this.token == '(') {
-            parser_token_consumer(this.token);
+            parser_token_consumer();
             result = parser_expr(result);
             // Check if parenthesis is closing with ')' literal
             if (this.token != ')') {
                 throw new ParseError();
             }
-            parser_token_consumer(this.token);
+            parser_token_consumer();
             return result;
         }
         else {
@@ -117,7 +114,7 @@ public class Parser {
                 throw new ParseError();
             }
             result = parser_evaluator(this.token);
-            parser_token_consumer(this.token);
+            parser_token_consumer();
             return result;
         }
     }

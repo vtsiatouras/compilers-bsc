@@ -27,13 +27,13 @@ public class Parser {
         }
     }
 
-    private int parser_evaluator(int digit) {
+    private double parser_evaluator(double digit) {
         return digit - '0';
     }
 
     private void parser_goal() throws ParseError {
         parser_token_consumer();
-        int resultValue = parser_expr(0);
+        double resultValue = parser_expr(0);
         // Check for EOF
         if (this.token != '\0') {
             throw new ParseError();
@@ -42,14 +42,14 @@ public class Parser {
         System.out.println(resultValue);
     }
 
-    private int parser_expr(int result) throws ParseError {
+    private double parser_expr(double result) throws ParseError {
         result = parser_term(result);
         result = parser_expr2(result);
         return result;
     }
 
 
-    private int parser_expr2(int result) throws ParseError {
+    private double parser_expr2(double result) throws ParseError {
         // Check for EOF
         if (this.token == '\0') {
             return result;
@@ -67,13 +67,13 @@ public class Parser {
         return result;
     }
 
-    private int parser_term(int result) throws ParseError {
+    private double parser_term(double result) throws ParseError {
         result = parser_factor(result);
         result = parser_term2(result);
         return result;
     }
 
-    private int parser_term2(int result) throws ParseError {
+    private double parser_term2(double result) throws ParseError {
         // Check for EOF
         if (this.token == '\0') {
             return result;
@@ -92,7 +92,7 @@ public class Parser {
         return result;
     }
 
-    private int parser_factor(int result) throws ParseError {
+    private double parser_factor(double result) throws ParseError {
         // Check for EOF
         if (this.token == '\0') {
             throw new ParseError();

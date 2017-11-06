@@ -5,3 +5,4 @@ compile:
 
 clean:
 	rm -f *.class
+	

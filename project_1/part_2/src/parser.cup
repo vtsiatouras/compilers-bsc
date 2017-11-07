@@ -1,0 +1,58 @@
+/* Simple +/-/* expression language; parser evaluates constant expressions on the fly*/
+/**
+ *  Package and Import Specifications
+ */
+import java_cup.runtime.*;
+
+/**
+ *  Usercode Components
+ */
+parser code {:
+    // Connect this parser to a scanner!
+    Scanner s;
+    Parser(Scanner s){ this.s=s; }
+:}
+
+/* define how to connect to the scanner! */
+scan with {: return s.next_token(); :};
+
+/**
+ *  Symbol Lists
+ */
+
+/* Terminals (tokens returned by the scanner). */
+terminal            SEMI, PLUS, MINUS, TIMES, UMINUS, LPAREN, RPAREN, IDENTIFIER, NUMBER;
+
+
+/*  Non terminals */
+non terminal    prog, functions_definitions, functions_calls, function_define, function_block, function_call,
+function_id, function_args;
+
+/**
+ *  Precedence Declarations
+ */
+/*precedence left PLUS, MINUS;
+precedence left TIMES;
+precedence left UMINUS;*/
+
+/**
+ *  The Grammar Rules
+ */
+prog                  ::= functions_definitions functions_calls  {: System.out.println("prog");:}
+;
+functions_definitions ::= function_define functions_definitions  {: System.out.println("fun_defs");:}
+;
+function_define       ::= function_id LPAREN function_args RPAREN function_block {: System.out.println("fun_def");:}
+;
+function_id           ::= IDENTIFIER                             {: System.out.println("fun_id");:}
+;
+//TODO change this to list of ids
+function_args         ::= IDENTIFIER                             {: System.out.println("fun_args");:}
+;
+//TODO this needs work....
+function_block        ::= IDENTIFIER                             {: System.out.println("fun_block");:}
+;
+functions_calls       ::= function_call functions_calls           {: System.out.println("fun_calls");:}
+;
+function_call         ::= function_id LPAREN function_args RPAREN SEMI  {: System.out.println("fun_call");:}
+;

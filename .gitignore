@@ -25,3 +25,7 @@ hs_err_pid*
 *.idea
 part_1.iml
 *out/
+
+# DO NOT IGNORE THE BELOW #
+!*java-cup-11b.jar
+!*java-cup-11b-runtime.jar

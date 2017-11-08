@@ -64,7 +64,9 @@ WhiteSpace     = {LineTerminator} | [ \t\f]
 Dec_int_lit = 0 | [1-9][0-9]*
 
 /* Identifiers */
-Identifier = [:jletter:] [:jletterdigit:]*
+Identifier1 = [:jletter:] [:jletterdigit:]*
+
+Identifier2 = [:jletter:] [:jletterdigit:]*
 
 /* String and character literals */
 StringCharacter = [^\r\n\"\\]
@@ -77,6 +79,9 @@ SingleCharacter = [^\r\n\'\\]
 /* separators */
  "("      { return symbol(sym.LPAREN); }
  ")"      { return symbol(sym.RPAREN); }
+ "{"      { return symbol(sym.LCURLYBRACKET); }
+ "}"      { return symbol(sym.RCURLYBRACKET); }
+ ","      { return symbol(sym.COMMA); }
  
 /* operators */
  "+"      { return symbol(sym.PLUS); }
@@ -85,16 +90,9 @@ SingleCharacter = [^\r\n\'\\]
  ";"      { return symbol(sym.SEMI); }
 
 
-/* string literal */
-//  \"                             { yybegin(STRING); string.setLength(0); }
-
-/* character literal */
-//  \'                             { yybegin(CHARLITERAL); }
-
-
-
 /* identifiers */ 
-{Identifier}                    { return symbol(sym.IDENTIFIER, yytext()); }
+{Identifier1}                    { return symbol(sym.IDENTIFIER1, yytext()); }
+{Identifier2}                    { return symbol(sym.IDENTIFIER2, yytext()); }
 
 /* numbers */
 {Dec_int_lit} { return symbol(sym.NUMBER, new Integer(yytext())); }

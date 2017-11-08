@@ -21,12 +21,11 @@ scan with {: return s.next_token(); :};
  */
 
 /* Terminals (tokens returned by the scanner). */
-terminal            SEMI, PLUS, MINUS, TIMES, UMINUS, LPAREN, RPAREN, IDENTIFIER, NUMBER;
+terminal    SEMI, PLUS, MINUS, TIMES, UMINUS, LPAREN, RPAREN, LCURLYBRACKET, RCURLYBRACKET, COMMA, IDENTIFIER1, IDENTIFIER2, NUMBER;
 
 
 /*  Non terminals */
-non terminal    prog, functions_definitions, functions_calls, function_define, function_block, function_call,
-function_id, function_args;
+non terminal    prog, functions_declarations, function_declare, function_stmts, function_statements, function_block, statement, functions_calls, function_call, function_args, function_arguments, function_argument;
 
 /**
  *  Precedence Declarations
@@ -35,24 +34,53 @@ function_id, function_args;
 precedence left TIMES;
 precedence left UMINUS;*/
 
+
 /**
  *  The Grammar Rules
  */
-prog                  ::= functions_definitions functions_calls  {: System.out.println("prog");:}
+prog                    ::= functions_declarations:fd  {: System.out.println("prog");:}
+                            
 ;
-functions_definitions ::= function_define functions_definitions  {: System.out.println("fun_defs");:}
+
+functions_declarations  ::= function_declare:decl functions_declarations:fd  {: System.out.println(decl);:}
+                        | functions_calls
 ;
-function_define       ::= function_id LPAREN function_args RPAREN function_block {: System.out.println("fun_def");:}
+
+function_declare        ::= IDENTIFIER1:function_id function_stmts function_block {: System.out.println(function_id);:}
 ;
-function_id           ::= IDENTIFIER                             {: System.out.println("fun_id");:}
+
+function_stmts          ::= LPAREN function_statements RPAREN
+                         /* Empty */
 ;
-//TODO change this to list of ids
-function_args         ::= IDENTIFIER                             {: System.out.println("fun_args");:}
+
+function_statements     ::= statement                                {: System.out.println("fun_stmts");:}
+                        | function_statements COMMA statement        {: System.out.println("fun_stmts");:}
+                        | /* Empty */
 ;
-//TODO this needs work....
-function_block        ::= IDENTIFIER                             {: System.out.println("fun_block");:}
+
+statement               ::= IDENTIFIER1:st                             {: System.out.println(st);:}
 ;
-functions_calls       ::= function_call functions_calls           {: System.out.println("fun_calls");:}
+
+function_block          ::= LCURLYBRACKET RCURLYBRACKET            {: System.out.println("fun_block");:}
 ;
-function_call         ::= function_id LPAREN function_args RPAREN SEMI  {: System.out.println("fun_call");:}
+
+functions_calls         ::= function_call functions_calls          {: System.out.println("fun_calls");:}
+                        
+;
+
+function_call           ::= IDENTIFIER2:function_id function_args {: System.out.println(function_id);:}
+                        
+;
+
+function_args           ::= LPAREN function_arguments RPAREN
+                       
+                         /* Empty */
+;
+
+function_arguments      ::= function_argument  {: System.out.println("fun_arguments");:}
+                        | function_arguments COMMA function_argument  {: System.out.println("fun_arguments");:}
+                        | /* Empty */
+;
+
+function_argument       ::= IDENTIFIER2:st                             {: System.out.println(st);:}
 ;

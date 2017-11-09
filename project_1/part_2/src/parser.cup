@@ -40,41 +40,41 @@ precedence left PLUS;
 /**
  *  The Grammar Rules
  */
-program                 ::= functions_declarations {: System.out.println("program");:}
+program                 ::= functions_declarations:fd {: System.out.println("public class Main {" + fd + "\n}");:}
 ;
 
-functions_declarations  ::= function_declare functions_declarations  {: System.out.println("functions_declarations");:}
-                        | functions_calls
+functions_declarations  ::= function_declare:decl functions_declarations:fd  {: RESULT = decl + "\n" + fd;:}
+                        | functions_calls:fc                                 {: RESULT = "\n\tpublic static void main(String[] args) {\n" + fc + "\t}";:}
 ;
 
-functions_calls         ::= function_call functions_calls             {: System.out.println("fun_calls");:}
-                        |
+functions_calls         ::= function_call:call functions_calls:fc             {: RESULT = call + "\n" + fc;:}
+                        |                                                     {: RESULT = "";:}
 ;
 
-function_declare        ::= IDENTIFIER:function_id LPAREN function_param_list RPAREN LCURLYBRACKET body_function RCURLYBRACKET {: System.out.println("IDENTIFIER "+function_id);:}
+function_declare        ::= IDENTIFIER:function_id LPAREN function_param_list:pr RPAREN LCURLYBRACKET body_function:body RCURLYBRACKET   {: RESULT = "\n\tpublic static String " + function_id + " (" + pr + ") {\n" + body + "\n\t}";:}
 ;
 
-function_call           ::= IDENTIFIER:function_id LPAREN function_param_list RPAREN {: System.out.println("IDENTIFIER "+function_id);:}     
+function_call           ::= IDENTIFIER:function_id LPAREN function_param_list:parlist RPAREN    {: RESULT = "\t\tSystem.out.println(" + function_id + "(" + parlist + "));";:}     
 ;
 
-function_param_list     ::= parameter                                {: System.out.println("parameter");:}
-                        | function_param_list COMMA parameter        {: System.out.println("fun_params");:}
-                        | /* Empty */
+function_param_list     ::= parameter:par                                      {: RESULT = par;:}
+                        | function_param_list:parlist COMMA parameter:par      {: RESULT = parlist + ", " + par;:}
+                        | /* Empty */                                          {: RESULT = "";:}
 ;
 
-parameter               ::= IDENTIFIER:param                         {: System.out.println("IDENTIFIER "+param);:}
-                        | STRING_LITERAL:str                       {: System.out.println("STRING_LITERAL "+str);:}
+parameter               ::= IDENTIFIER:param                          {: RESULT = "String " + param;:}
+                        | STRING_LITERAL:str                          {: RESULT = str;:}
 ;
 
-body_function           ::= statements      
+body_function           ::= statements:stmts                          {: RESULT = "\t\t" + stmts;:}
+                        |                                             {: RESULT = "";:}
 ;
 
-statements              ::= expression
+statements              ::= expression:expr                           {: RESULT = "return " + expr + ";";:}
                         
 ;
 
-expression              ::= IDENTIFIER:idntf                         {: System.out.println("return IDENTIFIER "+idntf);:}
-                        | STRING_LITERAL:str                         {: System.out.println("return STR "+str);:}
-                        | expression PLUS expression                 {: System.out.println("concat");:}
-                        |
+expression              ::= IDENTIFIER:idntf                          {: RESULT = idntf;:}
+                        | STRING_LITERAL:str                          {: RESULT = str;:}
+                        | expression:expr1 PLUS expression:expr2      {: RESULT =  expr1 +"+"+ expr2;:}                                                                   
 ;

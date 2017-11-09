@@ -29,11 +29,13 @@ non terminal    program, functions_declarations, function_declare;
 non terminal    function_name, function_param_list, function_block;
 non terminal    parameter, functions_calls, function_call;
 non terminal    function_arguments, function_argument;
+non terminal    body_function, statements, statement;
+non terminal    expression;
 
 /**
  *  Precedence Declarations
  */
-/* NOTHING HERE */
+precedence left PLUS;
 
 /**
  *  The Grammar Rules
@@ -49,7 +51,7 @@ functions_calls         ::= function_call functions_calls             {: System.
                         |
 ;
 
-function_declare        ::= IDENTIFIER:function_id LPAREN function_param_list RPAREN LCURLYBRACKET RCURLYBRACKET {: System.out.println("IDENTIFIER "+function_id);:}
+function_declare        ::= IDENTIFIER:function_id LPAREN function_param_list RPAREN LCURLYBRACKET body_function RCURLYBRACKET {: System.out.println("IDENTIFIER "+function_id);:}
 ;
 
 function_call           ::= IDENTIFIER:function_id LPAREN function_param_list RPAREN {: System.out.println("IDENTIFIER "+function_id);:}     
@@ -62,4 +64,17 @@ function_param_list     ::= parameter                                {: System.o
 
 parameter               ::= IDENTIFIER:param                         {: System.out.println("IDENTIFIER "+param);:}
                         | STRING_LITERAL:str                       {: System.out.println("STRING_LITERAL "+str);:}
+;
+
+body_function           ::= statements      
+;
+
+statements              ::= expression
+                        
+;
+
+expression              ::= IDENTIFIER:idntf                         {: System.out.println("return IDENTIFIER "+idntf);:}
+                        | STRING_LITERAL:str                         {: System.out.println("return STR "+str);:}
+                        | expression PLUS expression                 {: System.out.println("concat");:}
+                        |
 ;

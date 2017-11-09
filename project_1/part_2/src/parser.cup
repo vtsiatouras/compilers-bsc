@@ -3,6 +3,7 @@
  *  Package and Import Specifications
  */
 import java_cup.runtime.*;
+import java.io.*;
 
 /**
  *  Usercode Components
@@ -40,11 +41,29 @@ precedence left PLUS;
 /**
  *  The Grammar Rules
  */
-program                 ::= functions_declarations:fd {: System.out.println("}"); :}
+//TODO add exceptions for the file
+program                 ::= functions_declarations:fd                          {: File file = new File("out/Main.java");
+                                                                                  if(!file.exists()){file.createNewFile();} 
+                                                                                  FileWriter fw = new FileWriter(file,true); 
+                                                                                  BufferedWriter bw = new BufferedWriter(fw);
+                                                                                  PrintWriter pw = new PrintWriter(bw); 
+                                                                                  pw.println("}"); 
+                                                                                  pw.close(); :}
 ;
 
-functions_declarations  ::= function_declare:decl functions_declarations:fd    {: System.out.println(decl); :}
-                        | functions_calls:fc                                   {: System.out.println("public class Main {\n\tpublic static void main(String[] args) {\n" + fc + "\t}"); :}
+functions_declarations  ::= function_declare:decl functions_declarations:fd    {: File file = new File("out/Main.java"); 
+                                                                                  if(!file.exists()){file.createNewFile();} 
+                                                                                  FileWriter fw = new FileWriter(file,true); 
+                                                                                  BufferedWriter bw = new BufferedWriter(fw);
+                                                                                  PrintWriter pw = new PrintWriter(bw); 
+                                                                                  pw.println(decl); 
+                                                                                  pw.close(); :}
+                        | functions_calls:fc                                   {: File file = new File("out/Main.java"); 
+                                                                                  if(!file.exists()){file.createNewFile();} 
+                                                                                  FileWriter fw = new FileWriter(file,false); 
+                                                                                  BufferedWriter bw = new BufferedWriter(fw);
+                                                                                  PrintWriter pw = new PrintWriter(bw); pw.println("public class Main {\n\tpublic static void main(String[] args) {\n" + fc + "\t}"); 
+                                                                                  pw.close(); :}
 ;
 
 functions_calls         ::= function_call:call functions_calls:fc              {: RESULT = call + "\n" + fc ;:}

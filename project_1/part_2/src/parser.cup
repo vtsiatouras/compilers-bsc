@@ -21,66 +21,45 @@ scan with {: return s.next_token(); :};
  */
 
 /* Terminals (tokens returned by the scanner). */
-terminal    SEMI, PLUS, MINUS, TIMES, UMINUS, LPAREN, RPAREN, LCURLYBRACKET, RCURLYBRACKET, COMMA, IDENTIFIER1, IDENTIFIER2, NUMBER;
+terminal    SEMI, PLUS, MINUS, TIMES, UMINUS, LPAREN, RPAREN, LCURLYBRACKET, RCURLYBRACKET, COMMA, IDENTIFIER, STRING_LITERAL, NUMBER;
 
 
 /*  Non terminals */
-non terminal    prog, functions_declarations, function_declare, function_stmts, function_statements, function_block, statement, functions_calls, function_call, function_args, function_arguments, function_argument;
+non terminal    program, functions_declarations, function_declare;
+non terminal    function_name, function_param_list, function_block;
+non terminal    parameter, functions_calls, function_call;
+non terminal    function_arguments, function_argument;
 
 /**
  *  Precedence Declarations
  */
-/*precedence left PLUS, MINUS;
-precedence left TIMES;
-precedence left UMINUS;*/
-
+/* NOTHING HERE */
 
 /**
  *  The Grammar Rules
  */
-prog                    ::= functions_declarations:fd  {: System.out.println("prog");:}
-                            
+program                 ::= functions_declarations {: System.out.println("program");:}
 ;
 
-functions_declarations  ::= function_declare:decl functions_declarations:fd  {: System.out.println(decl);:}
+functions_declarations  ::= function_declare functions_declarations  {: System.out.println("functions_declarations");:}
                         | functions_calls
 ;
 
-function_declare        ::= IDENTIFIER1:function_id function_stmts function_block {: System.out.println(function_id);:}
+functions_calls         ::= function_call functions_calls             {: System.out.println("fun_calls");:}
+                        |
 ;
 
-function_stmts          ::= LPAREN function_statements RPAREN
-                         /* Empty */
+function_declare        ::= IDENTIFIER:function_id LPAREN function_param_list RPAREN LCURLYBRACKET RCURLYBRACKET {: System.out.println("IDENTIFIER "+function_id);:}
 ;
 
-function_statements     ::= statement                                {: System.out.println("fun_stmts");:}
-                        | function_statements COMMA statement        {: System.out.println("fun_stmts");:}
+function_call           ::= IDENTIFIER:function_id LPAREN function_param_list RPAREN {: System.out.println("IDENTIFIER "+function_id);:}     
+;
+
+function_param_list     ::= parameter                                {: System.out.println("parameter");:}
+                        | function_param_list COMMA parameter        {: System.out.println("fun_params");:}
                         | /* Empty */
 ;
 
-statement               ::= IDENTIFIER1:st                             {: System.out.println(st);:}
-;
-
-function_block          ::= LCURLYBRACKET RCURLYBRACKET            {: System.out.println("fun_block");:}
-;
-
-functions_calls         ::= function_call functions_calls          {: System.out.println("fun_calls");:}
-                        
-;
-
-function_call           ::= IDENTIFIER2:function_id function_args {: System.out.println(function_id);:}
-                        
-;
-
-function_args           ::= LPAREN function_arguments RPAREN
-                       
-                         /* Empty */
-;
-
-function_arguments      ::= function_argument  {: System.out.println("fun_arguments");:}
-                        | function_arguments COMMA function_argument  {: System.out.println("fun_arguments");:}
-                        | /* Empty */
-;
-
-function_argument       ::= IDENTIFIER2:st                             {: System.out.println(st);:}
+parameter               ::= IDENTIFIER:param                         {: System.out.println("IDENTIFIER "+param);:}
+                        | STRING_LITERAL:str                       {: System.out.println("STRING_LITERAL "+str);:}
 ;

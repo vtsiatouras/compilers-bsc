@@ -7,6 +7,6 @@ surname() {
 fullname(first_name, sep, last_name) {
 }
 
-name( ) 
+name() 
 surname() 
-fullname(first_name, sep, last_name) 
+fullname("asas", "asada", "fafsaf") 

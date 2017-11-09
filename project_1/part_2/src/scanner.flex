@@ -64,41 +64,40 @@ WhiteSpace     = {LineTerminator} | [ \t\f]
 Dec_int_lit = 0 | [1-9][0-9]*
 
 /* Identifiers */
-Identifier1 = [:jletter:] [:jletterdigit:]*
+Identifier = [:jletter:] [:jletterdigit:]*
 
-Identifier2 = [:jletter:] [:jletterdigit:]*
-
-/* String and character literals */
-StringCharacter = [^\r\n\"\\]
-SingleCharacter = [^\r\n\'\\]
+/* String literals */
+String_literal = \"(.[^\"]*)\"
 
 %%
 /* ------------------------Lexical Rules Section---------------------- */
 
 <YYINITIAL> {
-/* separators */
- "("      { return symbol(sym.LPAREN); }
- ")"      { return symbol(sym.RPAREN); }
- "{"      { return symbol(sym.LCURLYBRACKET); }
- "}"      { return symbol(sym.RCURLYBRACKET); }
- ","      { return symbol(sym.COMMA); }
- 
-/* operators */
- "+"      { return symbol(sym.PLUS); }
- "-"      { return symbol(sym.MINUS); }
- "*"      { return symbol(sym.TIMES); }
- ";"      { return symbol(sym.SEMI); }
+    /* separators */
+    "("      { return symbol(sym.LPAREN); }
+    ")"      { return symbol(sym.RPAREN); }
+    "{"      { return symbol(sym.LCURLYBRACKET); }
+    "}"      { return symbol(sym.RCURLYBRACKET); }
+    ","      { return symbol(sym.COMMA); }
+     
+    /* operators */
+    "+"      { return symbol(sym.PLUS); }
+    "-"      { return symbol(sym.MINUS); }
+    "*"      { return symbol(sym.TIMES); }
+    ";"      { return symbol(sym.SEMI); }
 
 
-/* identifiers */ 
-{Identifier1}                    { return symbol(sym.IDENTIFIER1, yytext()); }
-{Identifier2}                    { return symbol(sym.IDENTIFIER2, yytext()); }
+    /* identifiers */ 
+    {Identifier}            { return symbol(sym.IDENTIFIER, yytext()); }
 
-/* numbers */
-{Dec_int_lit} { return symbol(sym.NUMBER, new Integer(yytext())); }
+    /* string literals */
+    {String_literal}        { return symbol(sym.STRING_LITERAL, yytext()); }
 
-/* whitespaces */
-{WhiteSpace} { /* just skip what was found, do nothing */ }
+    /* numbers */
+    {Dec_int_lit}           { return symbol(sym.NUMBER, new Integer(yytext())); }
+
+    /* whitespaces */
+    {WhiteSpace}            { /* just skip what was found, do nothing */ }
 
 }
 

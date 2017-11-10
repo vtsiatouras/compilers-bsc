@@ -1,0 +1,14 @@
+name(a) {
+    "John"
+}
+
+repeat(x) {
+    x + x
+}
+
+condRepeat(c, x) {
+    repeat(x)
+}
+
+condRepeat("yes", name("asdf"))
+condRepeat("no", "Jane")

@@ -1,0 +1,17 @@
+name() {
+    "John"
+}
+
+repeat(x) {
+    x + x
+}
+
+condRepeat(c, x) {
+    if (c = "yes")
+        repeat(x)
+    else
+        x
+}
+
+condRepeat("yes", name())
+condRepeat("no", "Jane")

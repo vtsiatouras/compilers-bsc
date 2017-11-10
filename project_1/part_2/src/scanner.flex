@@ -84,6 +84,9 @@ String_literal = \"(.[^\"]*)\"
     "if"     { return symbol(sym.IF); }
     "else"   { return symbol(sym.ELSE); }
 
+    /* in */
+    "in"     { return symbol(sym.IN); }
+
     /* operators */
     "+"      { return symbol(sym.PLUS); }
     // "-"      { return symbol(sym.MINUS); }

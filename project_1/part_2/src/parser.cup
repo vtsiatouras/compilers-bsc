@@ -24,7 +24,7 @@ scan with {: return s.next_token(); :};
 /* Terminals (tokens returned by the scanner). */
 terminal    IDENTIFIER, STRING_LITERAL;
 terminal    LPAREN, RPAREN, LCURLYBRACKET, RCURLYBRACKET;
-terminal    PLUS, EQUALS, COMMA, IF, ELSE;
+terminal    PLUS, EQUALS, IN, COMMA, IF, ELSE;
 
 /*  Non terminals */
 non terminal    program, functions_declarations, function_declare;
@@ -37,6 +37,8 @@ non terminal    function_body, statements, statement, expression;
  *  Precedence Declarations
  */
 precedence left PLUS;
+precedence left EQUALS;
+precedence left IN;
 
 /**
  *  The Grammar Rules
@@ -117,6 +119,6 @@ expression              ::= IDENTIFIER:idntf                                    
                         | STRING_LITERAL:str                                    {: RESULT = str; :}
                         | function_call_inner:fc                                {: RESULT = fc; :}
                         | expression:expr1 EQUALS expression:expr2              {: RESULT = expr1 + ".equals("+expr2+")"; :}
-                        | expression:expr1 IN expression:expr2
+                        | expression:expr1 IN expression:expr2                  {: RESULT = expr2 + ".contains("+expr1+")"; :}
                         | expression:expr1 PLUS expression:expr2                {: RESULT = expr1 +" + "+ expr2; :}
 ;

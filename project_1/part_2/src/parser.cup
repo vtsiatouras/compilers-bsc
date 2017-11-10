@@ -31,9 +31,8 @@ non terminal    program, functions_declarations, function_declare;
 non terminal    function_name, function_param_list, function_block;
 non terminal    parameter, functions_calls, function_call;
 non terminal    function_arguments, function_argument;
-non terminal    function_body, statements, statement;
-non terminal    expression, function_call_inner, fun_params_inner;
-
+non terminal    func_param_lst_inner, function_call_inner, fun_params_inner, parameter_inner;
+non terminal    function_body, statements, statement, expression;
 /**
  *  Precedence Declarations
  */
@@ -43,72 +42,80 @@ precedence left PLUS;
  *  The Grammar Rules
  */
 //TODO add exceptions for the file
-program                 ::= functions_declarations:fd                          {: File file = new File("out/Main.java");
-                                                                                  if(!file.exists()){file.createNewFile();}
-                                                                                  FileWriter fw = new FileWriter(file,true);
-                                                                                  BufferedWriter bw = new BufferedWriter(fw);
-                                                                                  PrintWriter pw = new PrintWriter(bw);
-                                                                                  pw.println("}");
-                                                                                  pw.close(); :}
+program                 ::= functions_declarations:fd                           {: File file = new File("out/Main.java");
+                                                                                   if(!file.exists()){file.createNewFile();}
+                                                                                   FileWriter fw = new FileWriter(file,true);
+                                                                                   BufferedWriter bw = new BufferedWriter(fw);
+                                                                                   PrintWriter pw = new PrintWriter(bw);
+                                                                                   pw.println("}");
+                                                                                   pw.close(); :}
 ;
 
-functions_declarations  ::= function_declare:decl functions_declarations:fd    {: File file = new File("out/Main.java");
-                                                                                  if(!file.exists()){file.createNewFile();}
-                                                                                  FileWriter fw = new FileWriter(file,true);
-                                                                                  BufferedWriter bw = new BufferedWriter(fw);
-                                                                                  PrintWriter pw = new PrintWriter(bw);
-                                                                                  pw.println(decl);
-                                                                                  pw.close(); :}
-                        | functions_calls:fc                                   {: File file = new File("out/Main.java");
-                                                                                  if(!file.exists()){file.createNewFile();}
-                                                                                  FileWriter fw = new FileWriter(file,false);
-                                                                                  BufferedWriter bw = new BufferedWriter(fw);
-                                                                                  PrintWriter pw = new PrintWriter(bw); pw.println("public class Main {\n\tpublic static void main(String[] args) {\n" + fc + "\t}");
-                                                                                  pw.close(); :}
+functions_declarations  ::= function_declare:decl functions_declarations:fd     {: File file = new File("out/Main.java");
+                                                                                   if(!file.exists()){file.createNewFile();}
+                                                                                   FileWriter fw = new FileWriter(file,true);
+                                                                                   BufferedWriter bw = new BufferedWriter(fw);
+                                                                                   PrintWriter pw = new PrintWriter(bw);
+                                                                                   pw.println(decl);
+                                                                                   pw.close(); :}
+                        | functions_calls:fc                                    {: File file = new File("out/Main.java");
+                                                                                   if(!file.exists()){file.createNewFile();}
+                                                                                   FileWriter fw = new FileWriter(file,false);
+                                                                                   BufferedWriter bw = new BufferedWriter(fw);
+                                                                                   PrintWriter pw = new PrintWriter(bw); pw.println("public class Main {\n\tpublic static void main(String[] args) {\n" + fc + "\t}");
+                                                                                   pw.close(); :}
 ;
 
-functions_calls         ::= function_call:call functions_calls:fc              {: RESULT = call + "\n" + fc ;:}
-                        | /* Empty */                                          {: RESULT = "";:}
+functions_calls         ::= function_call:call functions_calls:fc               {: RESULT = call + "\n" + fc ;:}
+                        | /* Empty */                                           {: RESULT = "";:}
 ;
 
 function_declare        ::= IDENTIFIER:function_id LPAREN function_param_list:pr RPAREN LCURLYBRACKET function_body:body RCURLYBRACKET
-                                                                               {: RESULT = "\n\tpublic static String " + function_id + " (" + pr + ") {\n" + body + "\n\t}"; :}
+                                                                                {: RESULT = "\n\tpublic static String " + function_id + " (" + pr + ") {\n" + body + "\n\t}"; :}
 ;
 
 function_call           ::= IDENTIFIER:function_id LPAREN function_param_list:parlist RPAREN
-                                                                               {: RESULT = "\t\tSystem.out.println(" + function_id + "(" + parlist + "));"; :}
+                                                                                {: RESULT = "\t\tSystem.out.println(" + function_id + "(" + parlist + "));"; :}
 ;
 
 
-function_param_list     ::= parameter:par                                      {: RESULT = par; :}
-                        | function_param_list:parlist COMMA parameter:par      {: RESULT = parlist + ", " + par; :}
-                        | /* Empty */                                          {: RESULT = ""; :}
+function_param_list     ::= parameter:par                                       {: RESULT = par; :}
+                        | function_param_list:parlist COMMA parameter:par       {: RESULT = parlist + ", " + par; :}
+                        | /* Empty */                                           {: RESULT = ""; :}
 ;
 
-function_call_inner     ::= IDENTIFIER:function_id LPAREN fun_params_inner:parlist RPAREN
-                                                                               {: RESULT = function_id + "(" + parlist + ")"; :}
+function_call_inner     ::= IDENTIFIER:function_id LPAREN func_param_lst_inner:parlist RPAREN
+                                                                                {: RESULT = function_id + "(" + parlist + ")"; :}
 ;
 
-fun_params_inner        ::= IDENTIFIER:param                                   {: RESULT = param; :}
-                        | STRING_LITERAL:str                                   {: RESULT = str; :}
-                        | function_call_inner:fc                               {: RESULT = fc; :}
+func_param_lst_inner    ::= parameter_inner:par                                 {: RESULT = par; :}
+                        | func_param_lst_inner:parlist COMMA parameter_inner:par{: RESULT = parlist + ", " + par; :}
+                        | /* Empty */                                           {: RESULT = ""; :}
 ;
 
-parameter               ::= IDENTIFIER:param                                   {: RESULT = "String " + param; :}
-                        | STRING_LITERAL:str                                   {: RESULT = str; :}
-                        | function_call_inner:fc                               {: RESULT = fc; :}
+parameter_inner         ::= IDENTIFIER:param                                    {: RESULT = param; :}
+                        | STRING_LITERAL:str                                    {: RESULT = str; :}
+                        | function_call_inner:fc                                {: RESULT = fc; :}
 ;
 
-function_body           ::= statements:stmts                                   {: RESULT = "\t\t" + stmts; :}
-                        | /* Empty */                                          {: RESULT = ""; :}
+//TODO na fugei o identifier!!
+parameter               ::= IDENTIFIER:param                                    {: RESULT = "String " + param; :}
+                        | STRING_LITERAL:str                                    {: RESULT = str; :}
+                        | function_call_inner:fc                                {: RESULT = fc; :}
 ;
 
-statements              ::= expression:expr                                    {: RESULT = "return " + expr + ";"; :}
+function_body           ::= statements:stmts                                    {: RESULT = "\t\t" + stmts; :}
+                        | /* Empty */                                           {: RESULT = ""; :}
+;
+
+statements              ::= IF LPAREN expression:ex1 EQUALS expression:ex2 RPAREN statements:stmt1 ELSE statements:stmt2
+                                                                                {: RESULT = "if (" + ex1 + ".equals("+ex2+")) {\n"+ "\t\t\t" + stmt1 + "\n\t\t}" + "\n\t\telse {\n\t\t\t" + stmt2 + "\n\t\t}"; :}
+                        | expression:expr                                       {: RESULT = "return " + expr + ";"; :}
 
 ;
 
-expression              ::= IDENTIFIER:idntf                                   {: RESULT = idntf; :}
-                        | STRING_LITERAL:str                                   {: RESULT = str; :}
-                        | function_call_inner:fc                               {: RESULT = fc; :}
-                        | expression:expr1 PLUS expression:expr2               {: RESULT = expr1 +"+"+ expr2; :}
+expression              ::= IDENTIFIER:idntf                                    {: RESULT = idntf; :}
+                        | STRING_LITERAL:str                                    {: RESULT = str; :}
+                        | function_call_inner:fc                                {: RESULT = fc; :}
+                        | expression:expr1 PLUS expression:expr2                {: RESULT = expr1 +"+"+ expr2; :}
 ;

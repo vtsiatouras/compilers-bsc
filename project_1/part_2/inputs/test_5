@@ -7,7 +7,10 @@ repeat(x) {
 }
 
 condRepeat(c, x) {
-    repeat(x)
+    if (c = "yes")
+        repeat(x)
+    else
+        x
 }
 
 condRepeat("yes", name())

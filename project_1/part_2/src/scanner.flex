@@ -61,7 +61,7 @@ WhiteSpace     = {LineTerminator} | [ \t\f]
 /* A literal integer is is a number beginning with a number between
    one and nine followed by zero or more numbers between zero and nine
    or just a zero.  */
-Dec_int_lit = 0 | [1-9][0-9]*
+// Dec_int_lit = 0 | [1-9][0-9]*
 
 /* Identifiers */
 Identifier = [:jletter:] [:jletterdigit:]*
@@ -79,22 +79,27 @@ String_literal = \"(.[^\"]*)\"
     "{"      { return symbol(sym.LCURLYBRACKET); }
     "}"      { return symbol(sym.RCURLYBRACKET); }
     ","      { return symbol(sym.COMMA); }
-     
+
+    /* if-else */
+    "if"     { return symbol(sym.IF); }
+    "else"   { return symbol(sym.ELSE); }
+
     /* operators */
     "+"      { return symbol(sym.PLUS); }
-    "-"      { return symbol(sym.MINUS); }
-    "*"      { return symbol(sym.TIMES); }
-    ";"      { return symbol(sym.SEMI); }
+    // "-"      { return symbol(sym.MINUS); }
+    // "*"      { return symbol(sym.TIMES); }
+    // ";"      { return symbol(sym.SEMI); }
+    "="      { return symbol(sym.EQUALS); }
 
 
-    /* identifiers */ 
+    /* identifiers */
     {Identifier}            { return symbol(sym.IDENTIFIER, yytext()); }
 
     /* string literals */
     {String_literal}        { return symbol(sym.STRING_LITERAL, yytext()); }
 
-    /* numbers */
-    {Dec_int_lit}           { return symbol(sym.NUMBER, new Integer(yytext())); }
+    // /* numbers */
+    // {Dec_int_lit}           { return symbol(sym.NUMBER, new Integer(yytext())); }
 
     /* whitespaces */
     {WhiteSpace}            { /* just skip what was found, do nothing */ }

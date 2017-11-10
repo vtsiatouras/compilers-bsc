@@ -27,12 +27,12 @@ terminal    LPAREN, RPAREN, LCURLYBRACKET, RCURLYBRACKET;
 terminal    PLUS, EQUALS, IN, COMMA, IF, ELSE;
 
 /*  Non terminals */
-non terminal    program, functions_declarations, function_declare;
-non terminal    function_name, function_param_list, function_block;
-non terminal    parameter, functions_calls, function_call;
-non terminal    function_arguments, function_argument;
-non terminal    func_param_lst_inner, function_call_inner, fun_params_inner, parameter_inner;
-non terminal    function_body, statements, statement, expression;
+non terminal    program, func_declarations, func_declare;
+non terminal    func_name, func_param_list, func_block;
+non terminal    parameter, func_calls, func_call;
+non terminal    func_arguments, func_argument;
+non terminal    func_param_lst_inner, func_call_inner, fun_params_inner, parameter_inner;
+non terminal    func_body, statements, statement, expression;
 /**
  *  Precedence Declarations
  */
@@ -44,7 +44,7 @@ precedence left IN;
  *  The Grammar Rules
  */
 //TODO add exceptions for the file
-program                 ::= functions_declarations:fd                           {: File file = new File("out/Main.java");
+program                  ::= func_declarations:fd                               {: File file = new File("out/Main.java");
                                                                                    if(!file.exists()){file.createNewFile();}
                                                                                    FileWriter fw = new FileWriter(file,true);
                                                                                    BufferedWriter bw = new BufferedWriter(fw);
@@ -53,14 +53,14 @@ program                 ::= functions_declarations:fd                           
                                                                                    pw.close(); :}
 ;
 
-functions_declarations  ::= function_declare:decl functions_declarations:fd     {: File file = new File("out/Main.java");
+func_declarations       ::= func_declare:decl func_declarations:fd              {: File file = new File("out/Main.java");
                                                                                    if(!file.exists()){file.createNewFile();}
                                                                                    FileWriter fw = new FileWriter(file,true);
                                                                                    BufferedWriter bw = new BufferedWriter(fw);
                                                                                    PrintWriter pw = new PrintWriter(bw);
                                                                                    pw.println(decl);
                                                                                    pw.close(); :}
-                        | functions_calls:fc                                    {: File file = new File("out/Main.java");
+                        | func_calls:fc                                         {: File file = new File("out/Main.java");
                                                                                    if(!file.exists()){file.createNewFile();}
                                                                                    FileWriter fw = new FileWriter(file,false);
                                                                                    BufferedWriter bw = new BufferedWriter(fw);
@@ -68,26 +68,26 @@ functions_declarations  ::= function_declare:decl functions_declarations:fd     
                                                                                    pw.close(); :}
 ;
 
-functions_calls         ::= function_call:call functions_calls:fc               {: RESULT = call + "\n" + fc ;:}
+func_calls              ::= func_call:call func_calls:fc                        {: RESULT = call + "\n" + fc ;:}
                         | /* Empty */                                           {: RESULT = "";:}
 ;
 
-function_declare        ::= IDENTIFIER:function_id LPAREN function_param_list:parlist RPAREN LCURLYBRACKET function_body:body RCURLYBRACKET
-                                                                                {: RESULT = "\n\tpublic static String " + function_id + " (" + parlist + ") {\n" + body + "\n\t}"; :}
+func_declare            ::= IDENTIFIER:func_id LPAREN func_param_list:parlist RPAREN LCURLYBRACKET func_body:body RCURLYBRACKET
+                                                                                {: RESULT = "\n\tpublic static String " + func_id + " (" + parlist + ") {\n" + body + "\n\t}"; :}
 ;
 
-function_call           ::= IDENTIFIER:function_id LPAREN function_param_list:parlist RPAREN
-                                                                                {: RESULT = "\t\tSystem.out.println(" + function_id + "(" + parlist + "));"; :}
+func_call               ::= IDENTIFIER:func_id LPAREN func_param_list:parlist RPAREN
+                                                                                {: RESULT = "\t\tSystem.out.println(" + func_id + "(" + parlist + "));"; :}
 ;
 
 
-function_param_list     ::= parameter:par                                       {: RESULT = par; :}
-                        | function_param_list:parlist COMMA parameter:par       {: RESULT = parlist + ", " + par; :}
+func_param_list         ::= parameter:par                                       {: RESULT = par; :}
+                        | func_param_list:parlist COMMA parameter:par           {: RESULT = parlist + ", " + par; :}
                         | /* Empty */                                           {: RESULT = ""; :}
 ;
 
-function_call_inner     ::= IDENTIFIER:function_id LPAREN func_param_lst_inner:parlist RPAREN
-                                                                                {: RESULT = function_id + "(" + parlist + ")"; :}
+func_call_inner         ::= IDENTIFIER:func_id LPAREN func_param_lst_inner:parlist RPAREN
+                                                                                {: RESULT = func_id + "(" + parlist + ")"; :}
 ;
 
 func_param_lst_inner    ::= parameter_inner:par                                 {: RESULT = par; :}
@@ -97,27 +97,27 @@ func_param_lst_inner    ::= parameter_inner:par                                 
 
 parameter_inner         ::= IDENTIFIER:param                                    {: RESULT = param; :}
                         | STRING_LITERAL:str                                    {: RESULT = str; :}
-                        | function_call_inner:fc                                {: RESULT = fc; :}
+                        | func_call_inner:fc                                    {: RESULT = fc; :}
 ;
 
 //TODO se top level call mono identifier!!
 parameter               ::= IDENTIFIER:param                                    {: RESULT = "String " + param; :}
                         | STRING_LITERAL:str                                    {: RESULT = str; :}
-                        | function_call_inner:fc                                {: RESULT = fc; :}
+                        | func_call_inner:fc                                    {: RESULT = fc; :}
 ;
 
-function_body           ::= statements:stmts                                    {: RESULT = "\t\t" + stmts; :}
+func_body               ::= statements:stmts                                    {: RESULT = "\t\t" + stmts; :}
                         | /* Empty */                                           {: RESULT = ""; :}
 ;
 
 statements              ::= IF LPAREN expression:expr RPAREN statements:stmt1 ELSE statements:stmt2
-                                                                                {: RESULT = "if (" + expr + ") {\n"+ "\t\t\t" + stmt1 + "\n\t\t}" + "\n\t\telse {\n\t\t\t" + stmt2 + "\n\t\t}"; :}
+                                                                                {: RESULT = "if (" + expr + ") { " + stmt1 + "}" + " else { " + stmt2 + " }";:}
                         | expression:expr                                       {: RESULT = "return " + expr + ";"; :}
 ;
 
 expression              ::= IDENTIFIER:idntf                                    {: RESULT = idntf; :}
                         | STRING_LITERAL:str                                    {: RESULT = str; :}
-                        | function_call_inner:fc                                {: RESULT = fc; :}
+                        | func_call_inner:fc                                {: RESULT = fc; :}
                         | expression:expr1 EQUALS expression:expr2              {: RESULT = expr1 + ".equals("+expr2+")"; :}
                         | expression:expr1 IN expression:expr2                  {: RESULT = expr2 + ".contains("+expr1+")"; :}
                         | expression:expr1 PLUS expression:expr2                {: RESULT = expr1 +" + "+ expr2; :}

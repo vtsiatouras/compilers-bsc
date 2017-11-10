@@ -70,8 +70,8 @@ functions_calls         ::= function_call:call functions_calls:fc               
                         | /* Empty */                                           {: RESULT = "";:}
 ;
 
-function_declare        ::= IDENTIFIER:function_id LPAREN function_param_list:pr RPAREN LCURLYBRACKET function_body:body RCURLYBRACKET
-                                                                                {: RESULT = "\n\tpublic static String " + function_id + " (" + pr + ") {\n" + body + "\n\t}"; :}
+function_declare        ::= IDENTIFIER:function_id LPAREN function_param_list:parlist RPAREN LCURLYBRACKET function_body:body RCURLYBRACKET
+                                                                                {: RESULT = "\n\tpublic static String " + function_id + " (" + parlist + ") {\n" + body + "\n\t}"; :}
 ;
 
 function_call           ::= IDENTIFIER:function_id LPAREN function_param_list:parlist RPAREN
@@ -98,7 +98,7 @@ parameter_inner         ::= IDENTIFIER:param                                    
                         | function_call_inner:fc                                {: RESULT = fc; :}
 ;
 
-//TODO na fugei o identifier!!
+//TODO se top level call mono identifier!!
 parameter               ::= IDENTIFIER:param                                    {: RESULT = "String " + param; :}
                         | STRING_LITERAL:str                                    {: RESULT = str; :}
                         | function_call_inner:fc                                {: RESULT = fc; :}
@@ -108,14 +108,15 @@ function_body           ::= statements:stmts                                    
                         | /* Empty */                                           {: RESULT = ""; :}
 ;
 
-statements              ::= IF LPAREN expression:ex1 EQUALS expression:ex2 RPAREN statements:stmt1 ELSE statements:stmt2
-                                                                                {: RESULT = "if (" + ex1 + ".equals("+ex2+")) {\n"+ "\t\t\t" + stmt1 + "\n\t\t}" + "\n\t\telse {\n\t\t\t" + stmt2 + "\n\t\t}"; :}
+statements              ::= IF LPAREN expression:expr RPAREN statements:stmt1 ELSE statements:stmt2
+                                                                                {: RESULT = "if (" + expr + ") {\n"+ "\t\t\t" + stmt1 + "\n\t\t}" + "\n\t\telse {\n\t\t\t" + stmt2 + "\n\t\t}"; :}
                         | expression:expr                                       {: RESULT = "return " + expr + ";"; :}
-
 ;
 
 expression              ::= IDENTIFIER:idntf                                    {: RESULT = idntf; :}
                         | STRING_LITERAL:str                                    {: RESULT = str; :}
                         | function_call_inner:fc                                {: RESULT = fc; :}
-                        | expression:expr1 PLUS expression:expr2                {: RESULT = expr1 +"+"+ expr2; :}
+                        | expression:expr1 EQUALS expression:expr2              {: RESULT = expr1 + ".equals("+expr2+")"; :}
+                        | expression:expr1 IN expression:expr2
+                        | expression:expr1 PLUS expression:expr2                {: RESULT = expr1 +" + "+ expr2; :}
 ;

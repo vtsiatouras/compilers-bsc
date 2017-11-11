@@ -32,7 +32,7 @@ non terminal    func_name, func_param_list_decl, func_block;
 non terminal    parameter_decl,parameter_call, func_calls, func_call;
 non terminal    func_arguments, func_argument;
 non terminal    func_param_list_inner, func_call_inner, fun_params_inner, parameter_inner;
-non terminal    func_body, statements, statement, expression, empty_param_list, rest_idntf;
+non terminal    func_body, statements, statement, expression, empty_param_list, rest_idntf, if_with_exprs;
 
 /**
  *  Precedence Declarations
@@ -89,16 +89,17 @@ func_param_list_decl    ::= parameter_decl:par                                  
 ;
 
 func_param_list_call    ::= parameter_call:par                                  {: RESULT = par; :}
-                        | func_param_list_call:parlist COMMA parameter_call:par {: RESULT = parlist + ", " + par; :}
+                        | func_param_list_call:parlist COMMA expression:par     {: RESULT = parlist + ", " + par; :}
 ;
 
 parameter_decl          ::= IDENTIFIER:param                                    {: RESULT = "String " + param; :}
 ;
 
-parameter_call          ::= STRING_LITERAL:str                                    {: RESULT = str; :}
-
-                        | IDENTIFIER:func_id LPAREN statements:st RPAREN        {: RESULT = func_id + "("+ st +")"; :}
-                        | IDENTIFIER:func_id LPAREN RPAREN        {: RESULT = func_id + "()"; :}
+parameter_call          ::= STRING_LITERAL:str                                  {: RESULT = str; :}
+                        | IDENTIFIER:func_id LPAREN expression:st RPAREN        {: RESULT = func_id + "("+ st +")"; :}
+                        | IDENTIFIER:func_id LPAREN if_with_exprs:if_expr RPAREN        {: RESULT = func_id + "("+ if_expr +")"; :}
+                        | IDENTIFIER:func_id LPAREN RPAREN                      {: RESULT = func_id + "()"; :}
+                        | if_with_exprs:if_expr                                 {: RESULT = if_expr; :}
 ;
 
 func_body               ::= statements:stmts                                    {: RESULT = "\t\t" + stmts; :}
@@ -106,8 +107,13 @@ func_body               ::= statements:stmts                                    
 ;
 
 statements              ::= IF LPAREN expression:expr RPAREN statements:stmt1 ELSE statements:stmt2
-                                                                                {: RESULT = "if (" + expr + ") { " + stmt1 + "}" + " else { " + stmt2 + " }";:}
+                                                                                {: RESULT = "if (" + expr + ") { " + stmt1 + "}" + " else { " + stmt2 + " }"; :}
                         | expression:expr                                       {: RESULT = "return " + expr + ";"; :}
+;
+
+/* Ternary if-else */
+if_with_exprs           ::= IF LPAREN expression:expr1 RPAREN expression:expr2 ELSE expression:expr3
+                                                                                {: RESULT = "(" + expr1 + ") ?" + expr2 + ":" + expr3 ; :}
 ;
 
 expression              ::= IDENTIFIER:idntf rest_idntf:id_r                    {: RESULT = idntf + "" + id_r; :}
@@ -124,9 +130,10 @@ rest_idntf              ::= LPAREN func_param_list_inner:parlist RPAREN         
 ;
 
 func_param_list_inner   ::= parameter_inner:par                                 {: RESULT = par; :}
-                        | func_param_list_inner:parlist COMMA parameter_inner:par{: RESULT = parlist + ", " + par; :}
+                        | func_param_list_inner:parlist COMMA parameter_inner:par
+                                                                                {: RESULT = parlist + ", " + par; :}
 ;
 
-parameter_inner         ::= expression:stmt                                       {: RESULT = stmt; :}
-                        // | func_call:fc                                    {: RESULT = fc; :}
+parameter_inner         ::= expression:expr                                     {: RESULT = expr; :}
+                        | if_with_exprs:if_expr                                 {: RESULT = if_expr; :}
 ;

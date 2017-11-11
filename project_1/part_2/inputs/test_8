@@ -1,0 +1,14 @@
+show(message){
+    message
+}
+
+answer(character){
+    if (character = "y")
+        "yes"
+    else
+        "no"
+}
+
+show("test")
+show(if (answer("y") = "yes" ) "Positive" else show("Negative"))
+show(if (answer("n") = "no" ) "Positive" else show("Negative"))

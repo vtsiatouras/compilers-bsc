@@ -27,12 +27,10 @@ terminal    LPAREN, RPAREN, LCURLYBRACKET, RCURLYBRACKET;
 terminal    PLUS, EQUALS, IN, COMMA, IF, ELSE;
 
 /*  Non terminals */
-non terminal    program, func_declarations, func_declare, func_param_list_call;
-non terminal    func_name, func_param_list_decl, func_block;
-non terminal    parameter_decl,parameter_call, func_calls, func_call;
-non terminal    func_arguments, func_argument;
-non terminal    func_param_list_inner, func_call_inner, fun_params_inner, parameter_inner;
-non terminal    func_body, statements, statement, expression, empty_param_list, rest_idntf, if_with_exprs;
+non terminal    program, func_declarations, func_declare, func_calls, func_call;
+non terminal    func_param_list_decl, func_param_list_call, func_param_list_inner;
+non terminal    parameter_inner, parameter_decl, parameter_call;
+non terminal    func_body, statements, expression, rest_idntf, if_with_exprs;
 
 /**
  *  Precedence Declarations
@@ -40,34 +38,40 @@ non terminal    func_body, statements, statement, expression, empty_param_list, 
 precedence left PLUS;
 precedence left EQUALS;
 precedence left IN;
-precedence left LPAREN, COMMA, RPAREN;
+precedence left LPAREN, RPAREN;
 
 /**
  *  The Grammar Rules
  */
-//TODO add exceptions for the file
-program                  ::= func_declarations:fd                               {: File file = new File("out/Main.java");
+
+program                  ::= func_declarations:fd                               {: try { File file = new File("out/Main.java");
                                                                                    if(!file.exists()){file.createNewFile();}
                                                                                    FileWriter fw = new FileWriter(file,true);
                                                                                    BufferedWriter bw = new BufferedWriter(fw);
                                                                                    PrintWriter pw = new PrintWriter(bw);
                                                                                    pw.println("}");
-                                                                                   pw.close(); :}
+                                                                                   pw.close(); }
+                                                                                   catch (Exception ex) {
+                                                                                   System.out.println("something went really bad..."); }:}
 ;
 
-func_declarations       ::= func_declare:decl func_declarations:fd              {: File file = new File("out/Main.java");
+func_declarations       ::= func_declare:decl func_declarations:fd              {: try { File file = new File("out/Main.java");
                                                                                    if(!file.exists()){file.createNewFile();}
                                                                                    FileWriter fw = new FileWriter(file,true);
                                                                                    BufferedWriter bw = new BufferedWriter(fw);
                                                                                    PrintWriter pw = new PrintWriter(bw);
                                                                                    pw.println(decl);
-                                                                                   pw.close(); :}
-                        | func_calls:fc                                         {: File file = new File("out/Main.java");
+                                                                                   pw.close(); }
+                                                                                   catch (Exception ex) {
+                                                                                   System.out.println("something went really bad..."); } :}
+                        | func_calls:fc                                         {: try { File file = new File("out/Main.java");
                                                                                    if(!file.exists()){file.createNewFile();}
                                                                                    FileWriter fw = new FileWriter(file,false);
                                                                                    BufferedWriter bw = new BufferedWriter(fw);
                                                                                    PrintWriter pw = new PrintWriter(bw); pw.println("public class Main {\n\tpublic static void main(String[] args) {\n" + fc + "\t}");
-                                                                                   pw.close(); :}
+                                                                                   pw.close(); }
+                                                                                   catch (Exception ex) {
+                                                                                   System.out.println("something went really bad..."); } :}
 ;
 
 func_calls              ::= func_call:call func_calls:fc                        {: RESULT = call + "\n" + fc ; :}
@@ -76,7 +80,8 @@ func_calls              ::= func_call:call func_calls:fc                        
 
 func_declare            ::= IDENTIFIER:func_id LPAREN func_param_list_decl:parlist RPAREN LCURLYBRACKET func_body:body RCURLYBRACKET
                                                                                 {: RESULT = "\n\tpublic static String " + func_id + " (" + parlist + ") {\n" + body + "\n\t}"; :}
-                        | IDENTIFIER:func_id LPAREN RPAREN LCURLYBRACKET func_body:body RCURLYBRACKET{: RESULT = "\n\tpublic static String" + func_id + "()); {\n" + body + "\n\t}"; :}
+                        | IDENTIFIER:func_id LPAREN RPAREN LCURLYBRACKET func_body:body RCURLYBRACKET
+                                                                                {: RESULT = "\n\tpublic static String" + func_id + "()); {\n" + body + "\n\t}"; :}
 ;
 
 func_call               ::= IDENTIFIER:func_id LPAREN func_param_list_call:parlist RPAREN
@@ -97,9 +102,9 @@ parameter_decl          ::= IDENTIFIER:param                                    
 
 parameter_call          ::= STRING_LITERAL:str                                  {: RESULT = str; :}
                         | IDENTIFIER:func_id LPAREN expression:st RPAREN        {: RESULT = func_id + "("+ st +")"; :}
-                        | IDENTIFIER:func_id LPAREN if_with_exprs:if_expr RPAREN        {: RESULT = func_id + "("+ if_expr +")"; :}
+                        | IDENTIFIER:func_id LPAREN if_with_exprs:if_expr RPAREN{: RESULT = func_id + "("+ if_expr +")"; :}
                         | IDENTIFIER:func_id LPAREN RPAREN                      {: RESULT = func_id + "()"; :}
-                        | if_with_exprs:if_expr                                 {: RESULT = if_expr; :}
+                        | if_with_exprs:if_expr                                 {: RESULT = if_expr; :} // TODO telika xreiazetai auto?
 ;
 
 func_body               ::= statements:stmts                                    {: RESULT = "\t\t" + stmts; :}
@@ -113,7 +118,7 @@ statements              ::= IF LPAREN expression:expr RPAREN statements:stmt1 EL
 
 /* Ternary if-else */
 if_with_exprs           ::= IF LPAREN expression:expr1 RPAREN expression:expr2 ELSE expression:expr3
-                                                                                {: RESULT = "(" + expr1 + ") ?" + expr2 + ":" + expr3 ; :}
+                                                                                {: RESULT = "(" + expr1 + ") ? " + expr2 + " : " + expr3 ; :}
 ;
 
 expression              ::= IDENTIFIER:idntf rest_idntf:id_r                    {: RESULT = idntf + "" + id_r; :}
@@ -123,10 +128,10 @@ expression              ::= IDENTIFIER:idntf rest_idntf:id_r                    
                         | expression:expr1 PLUS expression:expr2                {: RESULT = expr1 +" + "+ expr2; :}
 ;
 
-/* IN BODY FUNCTION CALLS */
+/* In body function calls */
 rest_idntf              ::= LPAREN func_param_list_inner:parlist RPAREN         {: RESULT = "(" + parlist + ")"; :}
                         | LPAREN RPAREN                                         {: RESULT = "()"; :}
-                        |                                                       {: RESULT = ""; :}
+                        | /* Empty */                                           {: RESULT = ""; :}
 ;
 
 func_param_list_inner   ::= parameter_inner:par                                 {: RESULT = par; :}

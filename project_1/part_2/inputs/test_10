@@ -1,0 +1,66 @@
+name()  {
+    "John"
+}
+
+surname() {
+    "Doe"
+}
+
+fullname(first_name, sep, last_name) {
+    first_name + sep + last_name
+}
+
+repeat(x) {
+    x + x
+}
+
+condRepeat(c, x) {
+    if (c = "yes")
+        repeat(x)
+    else
+        x
+}
+
+findLangType(lang) {
+    if (lang = "Java")
+        "Static"
+    else
+        if ("script" in lang)
+            if ("Java" in lang)
+                "Dynamic"
+            else
+                "Probably Dynamic"
+        else
+            "Unknown"
+}
+
+test1(x,y){
+    if(x = "What")
+        "No" + condRepeat(x,y)
+    else
+        if( if("helloJohn" in y) "yes" else "no" in "yeswow")
+            findLangType("Prolog")
+        else
+            y + "Duck"
+}
+
+test2(a,b,c){
+    if(a = "yes")
+        test2("no","why","idk")
+    else
+        b + "," + c
+}
+
+name()
+surname()
+fullname(name(), " ", surname())
+
+condRepeat("yes", name())
+condRepeat("no", "Jane")
+
+findLangType("Java")
+findLangType("Javascript")
+findLangType("Typescript")
+
+test1(if ("Doe" in surname()) "doe" else "What","hello" + name())
+test2("yes","no","maybe")

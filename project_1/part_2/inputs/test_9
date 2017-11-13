@@ -8,24 +8,17 @@ bar(){
 
 show(message){ message }
 
-noise(){ "ksjadfio" }
+noise(){ "test" }
 
-if_with_concat(input){
-    (if (foo() in input)
+if_else(input){
+    if (foo() in input)
         "Contains foo; "
     else
-        "Does not contain foo; ")
-    +
-    (if (bar() in input)
-        "Contains bar; "
-     else
-        "Does not contain bar; ")
-    +
-    "[Input string was: " + input + "]"
+        "Does not contain foo; "
 }
 
-show(if_with_concat(foo()))
-show(if_with_concat(bar()))
-show(if_with_concat(foo()+bar()))
-show(if_with_concat(noise()))
-show(if_with_concat(foo()+noise()+bar()))
+show(if_else(foo()))
+show(if_else(bar()))
+show(if_else(foo()+bar()))
+show(if_else(noise()))
+show(if_else(foo()+noise()+bar()))

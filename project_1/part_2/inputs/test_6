@@ -1,5 +1,5 @@
 findLangType(langName) {
-    if (lang = "Java")
+    if (langName = "Java")
         "Static"
     else
         if ("script" = "TEST")

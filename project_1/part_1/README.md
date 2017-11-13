@@ -10,7 +10,7 @@ LL(1) Parser - Arithmetic Calculator
  __java Main__ : Εκτέλεση με input απο console   
  __java Main < [input_file]__ : Εκτέλεση με input απο αρχείο (κάθε expression πρέπει να είναι σε ξεχωριστές γραμμές)
 
- ** Έχω προσθέσει κάποια test files στο directory inputs*
+ *Έχω προσθέσει κάποια test files στο directory inputs*
 
 ### Grammar Transformation
 

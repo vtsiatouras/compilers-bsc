@@ -10,7 +10,7 @@ Parser & Translator
 
  __make execute < [input_file]__ : Εκτέλεση με input απο αρχείο
 
- ** Έχω προσθέσει κάποια test files στο directory inputs*
+ *Έχω προσθέσει κάποια test files στο directory inputs*
 
  ### Παραδοχές
 

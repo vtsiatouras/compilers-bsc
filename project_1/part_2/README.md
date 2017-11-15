@@ -3,10 +3,10 @@ Parser & Translator
 
 ### Compile & Execution
 
-*__make__ : Compile
-*__make clean__ : Διαγραφη .class αρχείων
+* __make__ : Compile
+* __make clean__ : Διαγραφη .class αρχείων
 
-*__make execute < [input_file]__ : Εκτέλεση με input απο αρχείο
+* __make execute < [input_file]__ : Εκτέλεση με input απο αρχείο
 
  *Έχω προσθέσει κάποια test files στο directory inputs*
 

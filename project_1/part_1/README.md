@@ -3,10 +3,10 @@ LL(1) Parser - Arithmetic Calculator
 
 ### Compile & Execution
 
-* __make__ : Compile  
+* __make__ : Compile
 * __make clean__ : Διαγραφη .class αρχείων
 
-* __java Main__ : Εκτέλεση με input απο console   
+* __java Main__ : Εκτέλεση με input απο console
 * __java Main < [input_file]__ : Εκτέλεση με input απο αρχείο (κάθε expression πρέπει να είναι σε ξεχωριστές γραμμές)
 
  *Έχω προσθέσει κάποια test files στο directory inputs*

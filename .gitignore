@@ -29,11 +29,3 @@ part_1.iml
 # DO NOT IGNORE THE BELOW #
 !*java-cup-11b.jar
 !*java-cup-11b-runtime.jar
-
-# At the final push commit these... #
-
-project_1/part_2/src/Parser\.java
-
-project_1/part_2/src/Scanner\.java
-
-project_1/part_2/src/sym\.java

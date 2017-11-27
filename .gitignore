@@ -24,8 +24,11 @@ hs_err_pid*
 # Ignore IntelliJ files/directories #
 *.idea
 part_1.iml
+project_2.iml
 *out/
 
 # DO NOT IGNORE THE BELOW #
 !*java-cup-11b.jar
 !*java-cup-11b-runtime.jar
+!*javacc5.jar
+!*jtb132di.jar

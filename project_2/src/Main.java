@@ -17,7 +17,8 @@ class Main {
             FirstVisitor first_visit = new FirstVisitor();
             Goal root = parser.Goal();
             try {
-                System.out.println(root.accept(first_visit, null));
+//                System.out.println(root.accept(first_visit, null));
+                root.accept(first_visit, null);
             }
             catch(Exception ex) {
                 System.err.println(ex.getMessage());

@@ -6,7 +6,7 @@ import java.io.*;
 class Main {
     public static void main(String[] args) {
         if (args.length != 1) {
-            System.err.println("Usage: java Driver <inputFile>");
+            System.err.println("Usage: java Main <inputFile>");
             System.exit(1);
         }
         FileInputStream fis = null;
@@ -16,7 +16,12 @@ class Main {
             System.err.println("Program parsed successfully.");
             FirstVisitor first_visit = new FirstVisitor();
             Goal root = parser.Goal();
-            System.out.println(root.accept(first_visit, null));
+            try {
+                System.out.println(root.accept(first_visit, null));
+            }
+            catch(Exception ex) {
+                System.err.println(ex.getMessage());
+            }
         } catch (ParseException ex) {
             System.out.println(ex.getMessage());
         } catch (FileNotFoundException ex) {

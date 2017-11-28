@@ -14,28 +14,28 @@ public class DepthFirstVisitor implements Visitor {
    //
    // Auto class visitors--probably don't need to be overridden.
    //
-   public void visit(NodeList n) {
+   public void visit(NodeList n) throws Exception {
       for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); )
          e.nextElement().accept(this);
    }
 
-   public void visit(NodeListOptional n) {
+   public void visit(NodeListOptional n) throws Exception {
       if ( n.present() )
          for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); )
             e.nextElement().accept(this);
    }
 
-   public void visit(NodeOptional n) {
+   public void visit(NodeOptional n) throws Exception {
       if ( n.present() )
          n.node.accept(this);
    }
 
-   public void visit(NodeSequence n) {
+   public void visit(NodeSequence n) throws Exception {
       for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); )
          e.nextElement().accept(this);
    }
 
-   public void visit(NodeToken n) {}
+   public void visit(NodeToken n) throws Exception {}
 
    //
    // User-generated visitor methods below
@@ -46,7 +46,7 @@ public class DepthFirstVisitor implements Visitor {
     * f1 -> ( TypeDeclaration() )*
     * f2 -> <EOF>
     */
-   public void visit(Goal n) {
+   public void visit(Goal n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -72,7 +72,7 @@ public class DepthFirstVisitor implements Visitor {
     * f16 -> "}"
     * f17 -> "}"
     */
-   public void visit(MainClass n) {
+   public void visit(MainClass n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -97,7 +97,7 @@ public class DepthFirstVisitor implements Visitor {
     * f0 -> ClassDeclaration()
     *       | ClassExtendsDeclaration()
     */
-   public void visit(TypeDeclaration n) {
+   public void visit(TypeDeclaration n) throws Exception {
       n.f0.accept(this);
    }
 
@@ -109,7 +109,7 @@ public class DepthFirstVisitor implements Visitor {
     * f4 -> ( MethodDeclaration() )*
     * f5 -> "}"
     */
-   public void visit(ClassDeclaration n) {
+   public void visit(ClassDeclaration n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -128,7 +128,7 @@ public class DepthFirstVisitor implements Visitor {
     * f6 -> ( MethodDeclaration() )*
     * f7 -> "}"
     */
-   public void visit(ClassExtendsDeclaration n) {
+   public void visit(ClassExtendsDeclaration n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -144,7 +144,7 @@ public class DepthFirstVisitor implements Visitor {
     * f1 -> Identifier()
     * f2 -> ";"
     */
-   public void visit(VarDeclaration n) {
+   public void visit(VarDeclaration n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -165,7 +165,7 @@ public class DepthFirstVisitor implements Visitor {
     * f11 -> ";"
     * f12 -> "}"
     */
-   public void visit(MethodDeclaration n) {
+   public void visit(MethodDeclaration n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -185,7 +185,7 @@ public class DepthFirstVisitor implements Visitor {
     * f0 -> FormalParameter()
     * f1 -> FormalParameterTail()
     */
-   public void visit(FormalParameterList n) {
+   public void visit(FormalParameterList n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
    }
@@ -194,7 +194,7 @@ public class DepthFirstVisitor implements Visitor {
     * f0 -> Type()
     * f1 -> Identifier()
     */
-   public void visit(FormalParameter n) {
+   public void visit(FormalParameter n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
    }
@@ -202,7 +202,7 @@ public class DepthFirstVisitor implements Visitor {
    /**
     * f0 -> ( FormalParameterTerm() )*
     */
-   public void visit(FormalParameterTail n) {
+   public void visit(FormalParameterTail n) throws Exception {
       n.f0.accept(this);
    }
 
@@ -210,7 +210,7 @@ public class DepthFirstVisitor implements Visitor {
     * f0 -> ","
     * f1 -> FormalParameter()
     */
-   public void visit(FormalParameterTerm n) {
+   public void visit(FormalParameterTerm n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
    }
@@ -221,7 +221,7 @@ public class DepthFirstVisitor implements Visitor {
     *       | IntegerType()
     *       | Identifier()
     */
-   public void visit(Type n) {
+   public void visit(Type n) throws Exception {
       n.f0.accept(this);
    }
 
@@ -230,7 +230,7 @@ public class DepthFirstVisitor implements Visitor {
     * f1 -> "["
     * f2 -> "]"
     */
-   public void visit(ArrayType n) {
+   public void visit(ArrayType n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -239,14 +239,14 @@ public class DepthFirstVisitor implements Visitor {
    /**
     * f0 -> "boolean"
     */
-   public void visit(BooleanType n) {
+   public void visit(BooleanType n) throws Exception {
       n.f0.accept(this);
    }
 
    /**
     * f0 -> "int"
     */
-   public void visit(IntegerType n) {
+   public void visit(IntegerType n) throws Exception {
       n.f0.accept(this);
    }
 
@@ -258,7 +258,7 @@ public class DepthFirstVisitor implements Visitor {
     *       | WhileStatement()
     *       | PrintStatement()
     */
-   public void visit(Statement n) {
+   public void visit(Statement n) throws Exception {
       n.f0.accept(this);
    }
 
@@ -267,7 +267,7 @@ public class DepthFirstVisitor implements Visitor {
     * f1 -> ( Statement() )*
     * f2 -> "}"
     */
-   public void visit(Block n) {
+   public void visit(Block n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -279,7 +279,7 @@ public class DepthFirstVisitor implements Visitor {
     * f2 -> Expression()
     * f3 -> ";"
     */
-   public void visit(AssignmentStatement n) {
+   public void visit(AssignmentStatement n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -295,7 +295,7 @@ public class DepthFirstVisitor implements Visitor {
     * f5 -> Expression()
     * f6 -> ";"
     */
-   public void visit(ArrayAssignmentStatement n) {
+   public void visit(ArrayAssignmentStatement n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -314,7 +314,7 @@ public class DepthFirstVisitor implements Visitor {
     * f5 -> "else"
     * f6 -> Statement()
     */
-   public void visit(IfStatement n) {
+   public void visit(IfStatement n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -331,7 +331,7 @@ public class DepthFirstVisitor implements Visitor {
     * f3 -> ")"
     * f4 -> Statement()
     */
-   public void visit(WhileStatement n) {
+   public void visit(WhileStatement n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -346,7 +346,7 @@ public class DepthFirstVisitor implements Visitor {
     * f3 -> ")"
     * f4 -> ";"
     */
-   public void visit(PrintStatement n) {
+   public void visit(PrintStatement n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -365,7 +365,7 @@ public class DepthFirstVisitor implements Visitor {
     *       | MessageSend()
     *       | Clause()
     */
-   public void visit(Expression n) {
+   public void visit(Expression n) throws Exception {
       n.f0.accept(this);
    }
 
@@ -374,7 +374,7 @@ public class DepthFirstVisitor implements Visitor {
     * f1 -> "&&"
     * f2 -> Clause()
     */
-   public void visit(AndExpression n) {
+   public void visit(AndExpression n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -385,7 +385,7 @@ public class DepthFirstVisitor implements Visitor {
     * f1 -> "<"
     * f2 -> PrimaryExpression()
     */
-   public void visit(CompareExpression n) {
+   public void visit(CompareExpression n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -396,7 +396,7 @@ public class DepthFirstVisitor implements Visitor {
     * f1 -> "+"
     * f2 -> PrimaryExpression()
     */
-   public void visit(PlusExpression n) {
+   public void visit(PlusExpression n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -407,7 +407,7 @@ public class DepthFirstVisitor implements Visitor {
     * f1 -> "-"
     * f2 -> PrimaryExpression()
     */
-   public void visit(MinusExpression n) {
+   public void visit(MinusExpression n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -418,7 +418,7 @@ public class DepthFirstVisitor implements Visitor {
     * f1 -> "*"
     * f2 -> PrimaryExpression()
     */
-   public void visit(TimesExpression n) {
+   public void visit(TimesExpression n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -430,7 +430,7 @@ public class DepthFirstVisitor implements Visitor {
     * f2 -> PrimaryExpression()
     * f3 -> "]"
     */
-   public void visit(ArrayLookup n) {
+   public void visit(ArrayLookup n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -442,7 +442,7 @@ public class DepthFirstVisitor implements Visitor {
     * f1 -> "."
     * f2 -> "length"
     */
-   public void visit(ArrayLength n) {
+   public void visit(ArrayLength n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -456,7 +456,7 @@ public class DepthFirstVisitor implements Visitor {
     * f4 -> ( ExpressionList() )?
     * f5 -> ")"
     */
-   public void visit(MessageSend n) {
+   public void visit(MessageSend n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -469,7 +469,7 @@ public class DepthFirstVisitor implements Visitor {
     * f0 -> Expression()
     * f1 -> ExpressionTail()
     */
-   public void visit(ExpressionList n) {
+   public void visit(ExpressionList n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
    }
@@ -477,7 +477,7 @@ public class DepthFirstVisitor implements Visitor {
    /**
     * f0 -> ( ExpressionTerm() )*
     */
-   public void visit(ExpressionTail n) {
+   public void visit(ExpressionTail n) throws Exception {
       n.f0.accept(this);
    }
 
@@ -485,7 +485,7 @@ public class DepthFirstVisitor implements Visitor {
     * f0 -> ","
     * f1 -> Expression()
     */
-   public void visit(ExpressionTerm n) {
+   public void visit(ExpressionTerm n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
    }
@@ -494,7 +494,7 @@ public class DepthFirstVisitor implements Visitor {
     * f0 -> NotExpression()
     *       | PrimaryExpression()
     */
-   public void visit(Clause n) {
+   public void visit(Clause n) throws Exception {
       n.f0.accept(this);
    }
 
@@ -508,42 +508,42 @@ public class DepthFirstVisitor implements Visitor {
     *       | AllocationExpression()
     *       | BracketExpression()
     */
-   public void visit(PrimaryExpression n) {
+   public void visit(PrimaryExpression n) throws Exception {
       n.f0.accept(this);
    }
 
    /**
     * f0 -> <INTEGER_LITERAL>
     */
-   public void visit(IntegerLiteral n) {
+   public void visit(IntegerLiteral n) throws Exception {
       n.f0.accept(this);
    }
 
    /**
     * f0 -> "true"
     */
-   public void visit(TrueLiteral n) {
+   public void visit(TrueLiteral n) throws Exception {
       n.f0.accept(this);
    }
 
    /**
     * f0 -> "false"
     */
-   public void visit(FalseLiteral n) {
+   public void visit(FalseLiteral n) throws Exception {
       n.f0.accept(this);
    }
 
    /**
     * f0 -> <IDENTIFIER>
     */
-   public void visit(Identifier n) {
+   public void visit(Identifier n) throws Exception {
       n.f0.accept(this);
    }
 
    /**
     * f0 -> "this"
     */
-   public void visit(ThisExpression n) {
+   public void visit(ThisExpression n) throws Exception {
       n.f0.accept(this);
    }
 
@@ -554,7 +554,7 @@ public class DepthFirstVisitor implements Visitor {
     * f3 -> Expression()
     * f4 -> "]"
     */
-   public void visit(ArrayAllocationExpression n) {
+   public void visit(ArrayAllocationExpression n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -568,7 +568,7 @@ public class DepthFirstVisitor implements Visitor {
     * f2 -> "("
     * f3 -> ")"
     */
-   public void visit(AllocationExpression n) {
+   public void visit(AllocationExpression n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);
@@ -579,7 +579,7 @@ public class DepthFirstVisitor implements Visitor {
     * f0 -> "!"
     * f1 -> Clause()
     */
-   public void visit(NotExpression n) {
+   public void visit(NotExpression n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
    }
@@ -589,7 +589,7 @@ public class DepthFirstVisitor implements Visitor {
     * f1 -> Expression()
     * f2 -> ")"
     */
-   public void visit(BracketExpression n) {
+   public void visit(BracketExpression n) throws Exception {
       n.f0.accept(this);
       n.f1.accept(this);
       n.f2.accept(this);

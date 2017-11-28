@@ -14,7 +14,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
    //
    // Auto class visitors--probably don't need to be overridden.
    //
-   public void visit(NodeList n, A argu) {
+   public void visit(NodeList n, A argu) throws Exception {
       int _count=0;
       for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
          e.nextElement().accept(this,argu);
@@ -22,7 +22,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
       }
    }
 
-   public void visit(NodeListOptional n, A argu) {
+   public void visit(NodeListOptional n, A argu) throws Exception {
       if ( n.present() ) {
          int _count=0;
          for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
@@ -32,12 +32,12 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
       }
    }
 
-   public void visit(NodeOptional n, A argu) {
+   public void visit(NodeOptional n, A argu) throws Exception {
       if ( n.present() )
          n.node.accept(this,argu);
    }
 
-   public void visit(NodeSequence n, A argu) {
+   public void visit(NodeSequence n, A argu) throws Exception {
       int _count=0;
       for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
          e.nextElement().accept(this,argu);
@@ -45,7 +45,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
       }
    }
 
-   public void visit(NodeToken n, A argu) {}
+   public void visit(NodeToken n, A argu) throws Exception {}
 
    //
    // User-generated visitor methods below
@@ -56,7 +56,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f1 -> ( TypeDeclaration() )*
     * f2 -> <EOF>
     */
-   public void visit(Goal n, A argu) {
+   public void visit(Goal n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -82,7 +82,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f16 -> "}"
     * f17 -> "}"
     */
-   public void visit(MainClass n, A argu) {
+   public void visit(MainClass n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -107,7 +107,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f0 -> ClassDeclaration()
     *       | ClassExtendsDeclaration()
     */
-   public void visit(TypeDeclaration n, A argu) {
+   public void visit(TypeDeclaration n, A argu) throws Exception {
       n.f0.accept(this, argu);
    }
 
@@ -119,7 +119,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f4 -> ( MethodDeclaration() )*
     * f5 -> "}"
     */
-   public void visit(ClassDeclaration n, A argu) {
+   public void visit(ClassDeclaration n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -138,7 +138,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f6 -> ( MethodDeclaration() )*
     * f7 -> "}"
     */
-   public void visit(ClassExtendsDeclaration n, A argu) {
+   public void visit(ClassExtendsDeclaration n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -154,7 +154,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f1 -> Identifier()
     * f2 -> ";"
     */
-   public void visit(VarDeclaration n, A argu) {
+   public void visit(VarDeclaration n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -175,7 +175,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f11 -> ";"
     * f12 -> "}"
     */
-   public void visit(MethodDeclaration n, A argu) {
+   public void visit(MethodDeclaration n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -195,7 +195,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f0 -> FormalParameter()
     * f1 -> FormalParameterTail()
     */
-   public void visit(FormalParameterList n, A argu) {
+   public void visit(FormalParameterList n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
    }
@@ -204,7 +204,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f0 -> Type()
     * f1 -> Identifier()
     */
-   public void visit(FormalParameter n, A argu) {
+   public void visit(FormalParameter n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
    }
@@ -212,7 +212,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
    /**
     * f0 -> ( FormalParameterTerm() )*
     */
-   public void visit(FormalParameterTail n, A argu) {
+   public void visit(FormalParameterTail n, A argu) throws Exception {
       n.f0.accept(this, argu);
    }
 
@@ -220,7 +220,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f0 -> ","
     * f1 -> FormalParameter()
     */
-   public void visit(FormalParameterTerm n, A argu) {
+   public void visit(FormalParameterTerm n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
    }
@@ -231,7 +231,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     *       | IntegerType()
     *       | Identifier()
     */
-   public void visit(Type n, A argu) {
+   public void visit(Type n, A argu) throws Exception {
       n.f0.accept(this, argu);
    }
 
@@ -240,7 +240,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f1 -> "["
     * f2 -> "]"
     */
-   public void visit(ArrayType n, A argu) {
+   public void visit(ArrayType n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -249,14 +249,14 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
    /**
     * f0 -> "boolean"
     */
-   public void visit(BooleanType n, A argu) {
+   public void visit(BooleanType n, A argu) throws Exception {
       n.f0.accept(this, argu);
    }
 
    /**
     * f0 -> "int"
     */
-   public void visit(IntegerType n, A argu) {
+   public void visit(IntegerType n, A argu) throws Exception {
       n.f0.accept(this, argu);
    }
 
@@ -268,7 +268,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     *       | WhileStatement()
     *       | PrintStatement()
     */
-   public void visit(Statement n, A argu) {
+   public void visit(Statement n, A argu) throws Exception {
       n.f0.accept(this, argu);
    }
 
@@ -277,7 +277,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f1 -> ( Statement() )*
     * f2 -> "}"
     */
-   public void visit(Block n, A argu) {
+   public void visit(Block n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -289,7 +289,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f2 -> Expression()
     * f3 -> ";"
     */
-   public void visit(AssignmentStatement n, A argu) {
+   public void visit(AssignmentStatement n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -305,7 +305,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f5 -> Expression()
     * f6 -> ";"
     */
-   public void visit(ArrayAssignmentStatement n, A argu) {
+   public void visit(ArrayAssignmentStatement n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -324,7 +324,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f5 -> "else"
     * f6 -> Statement()
     */
-   public void visit(IfStatement n, A argu) {
+   public void visit(IfStatement n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -341,7 +341,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f3 -> ")"
     * f4 -> Statement()
     */
-   public void visit(WhileStatement n, A argu) {
+   public void visit(WhileStatement n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -356,7 +356,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f3 -> ")"
     * f4 -> ";"
     */
-   public void visit(PrintStatement n, A argu) {
+   public void visit(PrintStatement n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -375,7 +375,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     *       | MessageSend()
     *       | Clause()
     */
-   public void visit(Expression n, A argu) {
+   public void visit(Expression n, A argu) throws Exception {
       n.f0.accept(this, argu);
    }
 
@@ -384,7 +384,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f1 -> "&&"
     * f2 -> Clause()
     */
-   public void visit(AndExpression n, A argu) {
+   public void visit(AndExpression n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -395,7 +395,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f1 -> "<"
     * f2 -> PrimaryExpression()
     */
-   public void visit(CompareExpression n, A argu) {
+   public void visit(CompareExpression n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -406,7 +406,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f1 -> "+"
     * f2 -> PrimaryExpression()
     */
-   public void visit(PlusExpression n, A argu) {
+   public void visit(PlusExpression n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -417,7 +417,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f1 -> "-"
     * f2 -> PrimaryExpression()
     */
-   public void visit(MinusExpression n, A argu) {
+   public void visit(MinusExpression n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -428,7 +428,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f1 -> "*"
     * f2 -> PrimaryExpression()
     */
-   public void visit(TimesExpression n, A argu) {
+   public void visit(TimesExpression n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -440,7 +440,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f2 -> PrimaryExpression()
     * f3 -> "]"
     */
-   public void visit(ArrayLookup n, A argu) {
+   public void visit(ArrayLookup n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -452,7 +452,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f1 -> "."
     * f2 -> "length"
     */
-   public void visit(ArrayLength n, A argu) {
+   public void visit(ArrayLength n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -466,7 +466,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f4 -> ( ExpressionList() )?
     * f5 -> ")"
     */
-   public void visit(MessageSend n, A argu) {
+   public void visit(MessageSend n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -479,7 +479,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f0 -> Expression()
     * f1 -> ExpressionTail()
     */
-   public void visit(ExpressionList n, A argu) {
+   public void visit(ExpressionList n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
    }
@@ -487,7 +487,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
    /**
     * f0 -> ( ExpressionTerm() )*
     */
-   public void visit(ExpressionTail n, A argu) {
+   public void visit(ExpressionTail n, A argu) throws Exception {
       n.f0.accept(this, argu);
    }
 
@@ -495,7 +495,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f0 -> ","
     * f1 -> Expression()
     */
-   public void visit(ExpressionTerm n, A argu) {
+   public void visit(ExpressionTerm n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
    }
@@ -504,7 +504,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f0 -> NotExpression()
     *       | PrimaryExpression()
     */
-   public void visit(Clause n, A argu) {
+   public void visit(Clause n, A argu) throws Exception {
       n.f0.accept(this, argu);
    }
 
@@ -518,42 +518,42 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     *       | AllocationExpression()
     *       | BracketExpression()
     */
-   public void visit(PrimaryExpression n, A argu) {
+   public void visit(PrimaryExpression n, A argu) throws Exception {
       n.f0.accept(this, argu);
    }
 
    /**
     * f0 -> <INTEGER_LITERAL>
     */
-   public void visit(IntegerLiteral n, A argu) {
+   public void visit(IntegerLiteral n, A argu) throws Exception {
       n.f0.accept(this, argu);
    }
 
    /**
     * f0 -> "true"
     */
-   public void visit(TrueLiteral n, A argu) {
+   public void visit(TrueLiteral n, A argu) throws Exception {
       n.f0.accept(this, argu);
    }
 
    /**
     * f0 -> "false"
     */
-   public void visit(FalseLiteral n, A argu) {
+   public void visit(FalseLiteral n, A argu) throws Exception {
       n.f0.accept(this, argu);
    }
 
    /**
     * f0 -> <IDENTIFIER>
     */
-   public void visit(Identifier n, A argu) {
+   public void visit(Identifier n, A argu) throws Exception {
       n.f0.accept(this, argu);
    }
 
    /**
     * f0 -> "this"
     */
-   public void visit(ThisExpression n, A argu) {
+   public void visit(ThisExpression n, A argu) throws Exception {
       n.f0.accept(this, argu);
    }
 
@@ -564,7 +564,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f3 -> Expression()
     * f4 -> "]"
     */
-   public void visit(ArrayAllocationExpression n, A argu) {
+   public void visit(ArrayAllocationExpression n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -578,7 +578,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f2 -> "("
     * f3 -> ")"
     */
-   public void visit(AllocationExpression n, A argu) {
+   public void visit(AllocationExpression n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
@@ -589,7 +589,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f0 -> "!"
     * f1 -> Clause()
     */
-   public void visit(NotExpression n, A argu) {
+   public void visit(NotExpression n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
    }
@@ -599,7 +599,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f1 -> Expression()
     * f2 -> ")"
     */
-   public void visit(BracketExpression n, A argu) {
+   public void visit(BracketExpression n, A argu) throws Exception {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);

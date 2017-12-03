@@ -14,11 +14,13 @@ class Main {
             fis = new FileInputStream(args[0]);
             MiniJavaParser parser = new MiniJavaParser(fis);
             System.err.println("Program parsed successfully.");
+            SymbolTable symbolTable = new SymbolTable();
             FirstVisitor first_visit = new FirstVisitor();
             Goal root = parser.Goal();
             try {
 //                System.out.println(root.accept(first_visit, null));
-                root.accept(first_visit, null);
+                root.accept(first_visit, symbolTable);
+                symbolTable.PrintSymbolTable();
             }
             catch(Exception ex) {
                 System.err.println(ex.getMessage());

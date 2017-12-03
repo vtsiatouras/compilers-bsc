@@ -1,5 +1,8 @@
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+
+//todo na tsekarw pou 8elei linkedhashmap gia na exw order
 
 public class SymbolTable {
 
@@ -12,17 +15,34 @@ public class SymbolTable {
     void PrintSymbolTable() {
         for (Map.Entry entry : classes.entrySet()) {
             Object key = entry.getKey();
-            System.out.println("Class: " + key);
+            System.out.println("CLASS: " + key);
             ClassSymTable classSym = classes.get(key);
-            System.out.println("Fields:");
+            System.out.println("\nFIELDS:");
             for (Map.Entry classEntryFields : classSym.fields.entrySet()) {
-                System.out.println("   " + classEntryFields.getKey() + ", " + classEntryFields.getValue());
+                System.out.println("   " + classEntryFields.getValue() + " " + classEntryFields.getKey());
             }
-            System.out.println("Functions:");
-            for (Map.Entry classEntryFunctions : classSym.functions.entrySet()) {
-                System.out.println("   " + classEntryFunctions.getKey() + ", " + classEntryFunctions.getValue());
+            System.out.println("\nFUNCTIONS:");
+            for (Map.Entry classEntryFunctions : classSym.methods.entrySet()) {
+                Object keyMethod = classEntryFunctions.getKey();
+                System.out.print("    " + keyMethod + "(");
+                MethodSymTable methSym = classSym.methods.get(keyMethod);
+//                System.out.println("   PARAMETERS:");
+                boolean flag = false;
+                for (Map.Entry methodEntryFunctions : methSym.parameters.entrySet()) {
+                    if (flag) {
+                        System.out.print(", ");
+                    }
+                    flag = true;
+                    System.out.print(methodEntryFunctions.getValue() + " " + methodEntryFunctions.getKey());
+                }
+                System.out.print(")\n");
+                System.out.println("    VAR DECLS:");
+                for (Map.Entry methodEntryFunctions : methSym.variables.entrySet()) {
+                    System.out.println("        " + methodEntryFunctions.getValue() + " " + methodEntryFunctions.getKey());
+                }
+                System.out.println();
             }
-            System.out.println();
+            System.out.println("====================================");
         }
     }
 
@@ -30,23 +50,26 @@ public class SymbolTable {
         public String className;
         public String parentClassName;
         public HashMap<String, String> fields;
-        public HashMap<String, MethodSymTable> functions;
+        public HashMap<String, MethodSymTable> methods;
 
         ClassSymTable() {
             className = null;
             parentClassName = null;
             fields = new HashMap<String, String>();
-            functions = new HashMap<String, MethodSymTable>();
+            methods = new HashMap<String, MethodSymTable>();
         }
     }
 
     public static class MethodSymTable {
-        public HashMap<String, String> parameters;
+        public String methodName;
+        public String returnType;
+        public LinkedHashMap<String, String> parameters;
+        public LinkedHashMap<String, String> variables;
 
         MethodSymTable() {
-            parameters = new HashMap<String, String>();
+            parameters = new LinkedHashMap<String, String>();
+            variables = new LinkedHashMap<String, String>();
         }
     }
-
 
 }

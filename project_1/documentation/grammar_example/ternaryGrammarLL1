@@ -1,0 +1,4 @@
+Tern -> '0'..'9'  TernTail
+
+TernTail -> '?' Tern ':' Tern
+	     | e

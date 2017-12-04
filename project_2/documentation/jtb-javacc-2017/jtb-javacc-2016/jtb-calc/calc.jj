@@ -1,0 +1,114 @@
+/* calc.jj */
+
+options {
+  JAVA_UNICODE_ESCAPE = true;
+}
+
+PARSER_BEGIN(CalcParser)
+  public class CalcParser {}
+PARSER_END(CalcParser)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\r"
+| "\f"
+| "\n"
+}
+
+TOKEN :
+{
+  < LPAR: "(" >
+| < RPAR: ")" >
+| < PLUS: "+" >
+| < MINUS: "-" >
+| < MULT: "*" >
+| < DIV: "/" >
+}
+
+TOKEN : /* LITERALS */
+{
+  < NUMBER: (["0"-"9"])+ >
+}
+
+void Goal() :
+{}
+{
+  Exp() <EOF>
+}
+
+void Exp() :
+{}
+{
+	Term() [Exp2()]
+}
+
+void Exp2() :
+{}
+{
+	  PlusExp()
+	| MinusExp()
+}
+
+void PlusExp() :
+{}
+{
+	"+" Term() [Exp2()]
+}
+
+void MinusExp() :
+{}
+{
+	"-" Term() [Exp2()]
+}
+
+void Term() :
+{}
+{
+	Factor() [Term2()]
+}
+
+void Term2() :
+{}
+{
+	  TimesExp()
+	| DivExp()
+}
+
+void TimesExp() :
+{}
+{
+	"*" Factor() [Term2()]
+}
+
+void DivExp() :
+{}
+{
+	"/" Factor() [Term2()]
+}
+
+void Factor() :
+{}
+{
+	   Num()
+	| ParExp()
+}
+
+void Num() :
+{}
+{
+	<NUMBER>
+}
+
+void ParExp() :
+{}
+{
+
+	"(" Exp() ")"
+
+}
+
+
+
+

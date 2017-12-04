@@ -1,0 +1,44 @@
+options {
+  JAVA_UNICODE_ESCAPE = true;
+}
+
+PARSER_BEGIN(TernParser)
+  public class TernParser {}
+PARSER_END(TernParser)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\r"
+| "\f"
+| "\n"
+}
+
+TOKEN :
+{
+  < QM: "?" >
+| < QOLON: ":" >
+}
+
+TOKEN : /* LITERALS */
+{
+  < NUMBER: ["0"-"9"] >
+}
+
+/* grammar rules */
+
+void Tern() :
+{}
+{
+  <NUMBER> [TernTail()]
+}
+
+void TernTail() :
+{}
+{
+    "?" Tern() ":" Tern()
+}
+
+
+

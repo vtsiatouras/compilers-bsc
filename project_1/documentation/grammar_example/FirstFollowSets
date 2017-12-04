@@ -1,0 +1,18 @@
+FIRST sets
+-----------------------------
+FIRST(Tern) = { '0' .. '9'}
+
+FIRST(TernTail) = { '?', e }
+
+FOLLOW sets
+-----------------------------
+FOLLOW(Tern) = { ':', $ }
+
+FOLLOW(TernTail) = FOLLOW(Tern) = { ':', $ }
+
+FIRST+ sets
+-----------------------------
+FIRST+(Tern) = { '0' .. '9'}
+
+FIRST+(TernTail) = FIRST(TernTail) U FOLLOW(TernTail)  = { '?', 'e', ':', $ }
+

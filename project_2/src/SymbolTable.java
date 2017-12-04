@@ -24,9 +24,9 @@ public class SymbolTable {
             System.out.println("\nFUNCTIONS:");
             for (Map.Entry classEntryFunctions : classSym.methods.entrySet()) {
                 Object keyMethod = classEntryFunctions.getKey();
-                System.out.print("    " + keyMethod + "(");
                 MethodSymTable methSym = classSym.methods.get(keyMethod);
-//                System.out.println("   PARAMETERS:");
+                System.out.print("    " + methSym.returnType + " " + methSym.methodName + "(");
+
                 boolean flag = false;
                 for (Map.Entry methodEntryFunctions : methSym.parameters.entrySet()) {
                     if (flag) {
@@ -67,6 +67,8 @@ public class SymbolTable {
         public LinkedHashMap<String, String> variables;
 
         MethodSymTable() {
+            methodName = null;
+            returnType = null;
             parameters = new LinkedHashMap<String, String>();
             variables = new LinkedHashMap<String, String>();
         }

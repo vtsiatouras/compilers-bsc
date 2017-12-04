@@ -2,7 +2,7 @@ import syntaxtree.*;
 import visitor.GJDepthFirst;
 
 import java.util.HashMap;
-import java.util.Map;
+import java.util.Iterator;
 
 @SuppressWarnings("Duplicates") // Remove IntelliJ warning about duplicate code
 
@@ -50,7 +50,7 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
         String mainClassName = n.f1.accept(this, symbolTable);
         // Check if class was declared before
         if (symbolTable.classes.containsKey(mainClassName)) {
-            throw new Exception("Main class already declared!");
+            throw new Exception("Main class has already been declared!");
         }
         // Store class in the symbol table
         symbolTable.classes.put(mainClassName, new SymbolTable.ClassSymTable());
@@ -91,6 +91,7 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
         symbolTable.classes.put(className, new SymbolTable.ClassSymTable());
         SymbolTable.ClassSymTable curClass = symbolTable.classes.get(className);
         curClass.className = className;
+        curClass.parentClassName = null;
 
         // Set up visitor's fields to be aware where to check in the symbol table
         this.currentClassName = className;
@@ -118,13 +119,39 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
      * f6 -> ( MethodDeclaration() )*
      * f7 -> "}"
      */
-    //todo!!
     public String visit(ClassExtendsDeclaration n, SymbolTable symbolTable) throws Exception {
-        String _ret1, _ret2;
-        _ret1 = n.f1.accept(this, symbolTable);
-        _ret2 = n.f3.accept(this, symbolTable);
-        System.out.println("Class Name: " + _ret1 + "extends " + _ret2);
-        return _ret1;
+        String childClassName, parentClassName;
+        childClassName = n.f1.accept(this, symbolTable);
+        parentClassName = n.f3.accept(this, symbolTable);
+        // Check if the parent class does not exists
+        if (!symbolTable.classes.containsKey(parentClassName)) {
+            throw new Exception("Class '" + parentClassName + "' has not been declared!");
+        }
+        // Check if child class was declared before
+        if (symbolTable.classes.containsKey(childClassName)) {
+            throw new Exception("Class '" + childClassName + "' already declared!");
+        }
+        // Store child class in the symbol table
+        symbolTable.classes.put(childClassName, new SymbolTable.ClassSymTable());
+        SymbolTable.ClassSymTable curClass = symbolTable.classes.get(childClassName);
+        curClass.className = childClassName;
+        curClass.parentClassName = parentClassName;
+
+        // Set up visitor's fields to be aware where to check in the symbol table
+        this.currentClassName = childClassName;
+        this.classVar = true;
+        this.currentFunctionName = null;
+        this.functionParam = false;
+        this.functionVar = false;
+
+        // Visit VarDeclaration
+        String varDecl = n.f5.accept(this, symbolTable);
+
+        // Visit MethodDeclaration
+        String funDecl = n.f6.accept(this, symbolTable);
+
+//        System.out.println("Class Name: " + _ret1 + "extends " + _ret2);
+        return parentClassName;
     }
 
     /**
@@ -147,9 +174,9 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
 
         // todo auto den xreiazetai telika!
         // Method parameter
-        if (this.functionParam) {
-
-        }
+//        if (this.functionParam) {
+//
+//        }
 
         // Method variable
         if (this.functionVar) {
@@ -159,8 +186,6 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
                 throw new Exception("Variable '" + identifier + "' already declared!");
             }
             curMethod.variables.put(identifier, type);
-
-
         }
 
         return identifier;
@@ -182,30 +207,68 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
      * f12 -> "}"
      */
     public String visit(MethodDeclaration n, SymbolTable symbolTable) throws Exception {
-        String identifier = n.f2.accept(this, symbolTable);
+        String type = n.f1.accept(this, symbolTable);
+        String methodName = n.f2.accept(this, symbolTable);
+        // If method declared already inside the class
         SymbolTable.ClassSymTable curClass = symbolTable.classes.get(this.currentClassName);
-        if (curClass.methods.containsKey(identifier)) {
-            throw new Exception("Method '" + identifier + "' already declared!");
+        if (curClass.methods.containsKey(methodName)) {
+            throw new ParseException("Method '" + methodName + "' already declared!");
         }
-        curClass.methods.put(identifier, new SymbolTable.MethodSymTable());
+
+        // Store method to the symbol table
+        curClass.methods.put(methodName, new SymbolTable.MethodSymTable());
+        SymbolTable.MethodSymTable curMethod = curClass.methods.get(methodName);
+        curMethod.methodName = methodName;
+        curMethod.returnType = type;
 
         // Set up visitor's fields to be aware where to check in the symbol table
         this.classVar = false;
-        this.currentFunctionName = identifier;
+        this.currentFunctionName = methodName;
         this.functionParam = true;
         this.functionVar = false;
         // Visit ParameterList
         String params = n.f4.accept(this, symbolTable);
 
+        // If the method's class is extended of another class
+        if (curClass.parentClassName != null) {
+            SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(curClass.parentClassName);
+            // If the method with the same name was declared in parent class
+            // Then OVERRIDE is only allowed and NOT overloading
+            if (parentClass.methods.containsKey(methodName)) {
+                // Now must be compared return types, and parameters. They must be the exact same!
+                SymbolTable.MethodSymTable parentMethod = parentClass.methods.get(methodName);
+                // Compare types
+                if (!parentMethod.returnType.equals(curMethod.returnType)) {
+                    throw new Exception("Method '" + curMethod.methodName + "' is type of '" + curMethod.returnType + "'. Declared before at parent class '" + parentClass.parentClassName + "' with type of '" + parentMethod.returnType + "'");
+                }
+                // Compare number of parameters
+                if (curMethod.parameters.size() != parentMethod.parameters.size()){
+                    throw new Exception("Method '" + curMethod.methodName + "' in class '"+curClass.className + "' can't override because it has different parameters");
+                }
+                // Compare the type of the parameters
+                Iterator iterator1 = curMethod.parameters.keySet().iterator();
+                Iterator iterator2 = parentMethod.parameters.keySet().iterator();
+                while (iterator1.hasNext() && iterator2.hasNext()) {
+                    String key = iterator1.next().toString();
+                    String value1 = curMethod.parameters.get(key);
+                    key = iterator2.next().toString();
+                    String value2 = parentMethod.parameters.get(key);
+                    if (!value1.equals(value2)) {
+                        throw new Exception("Method '" + curMethod.methodName + "' in class '" + curClass.className + "' can't override because it has different parameters");
+                    }
+                }
+            }
+        }
+
         // Set up visitor's fields to be aware where to check in the symbol table
         this.classVar = false;
-        this.currentFunctionName = identifier;
+        this.currentFunctionName = methodName;
         this.functionParam = false;
         this.functionVar = true;
         // Visit VarDeclaration
         String vars = n.f7.accept(this, symbolTable);
 
-        return identifier;
+        return methodName;
     }
 
 

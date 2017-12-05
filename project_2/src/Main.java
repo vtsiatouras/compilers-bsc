@@ -10,7 +10,6 @@ class Main {
         }
         FileInputStream fis = null;
         for (int i = 0; i < args.length; i++) {
-
             try {
                 fis = new FileInputStream(args[i]);
                 MiniJavaParser parser = new MiniJavaParser(fis);
@@ -20,13 +19,17 @@ class Main {
                 SecondVisitor secondVisitor = new SecondVisitor();
                 Goal root = parser.Goal();
                 try {
+                    // Store all the critical information (i.e. class names, fields, methods, params, variables)
+                    // in the symbol table.
                     root.accept(firstVisitor, symbolTable);
-                    symbolTable.PrintSymbolTable();
-//                    root.accept(secondVisitor, symbolTable);
+                    symbolTable.print_symbol_table();
+                    // Typecheck the given program
+                    root.accept(secondVisitor, symbolTable);
+//                    symbolTable = null;
                 } catch (Exception ex) {
                     System.err.println(ex.getMessage());
                 } finally {
-                    symbolTable = null;
+//                    symbolTable = null;
                 }
             } catch (ParseException ex) {
                 System.out.println(ex.getMessage());

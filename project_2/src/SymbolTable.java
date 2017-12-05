@@ -12,7 +12,7 @@ public class SymbolTable {
         classes = new LinkedHashMap<>();
     }
 
-    void PrintSymbolTable() {
+    void print_symbol_table() {
         for (Map.Entry entry : classes.entrySet()) {
             Object key = entry.getKey();
             System.out.println("CLASS: " + key);

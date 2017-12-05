@@ -13,31 +13,33 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
     private Boolean functionVar;
     private String ExprType; //na apo8hkeuw to tupo tou aristerou merous enos stmt
 
-    public void look_up_identifier(String identifier, SymbolTable symbolTable) throws Exception {
-        // Lookup if this identifier is declared
+    public String look_up_identifier(String identifier, SymbolTable symbolTable) throws Exception {
+        // Lookup if this identifier is declared before
         SymbolTable.ClassSymTable curClass = symbolTable.classes.get(this.currentClassName);
         SymbolTable.MethodSymTable curMethod = curClass.methods.get(this.currentFunctionName);
+        // If you find it one of the below cases, return its type
         // Check if this identifier is a parameter or a variable
-        if (curMethod.parameters.containsKey(identifier) || curMethod.variables.containsKey(identifier)) {
-            return;
+        if (curMethod.parameters.containsKey(identifier)) {
+            return curMethod.parameters.get(identifier);
+        }
+        if (curMethod.variables.containsKey(identifier)) {
+            return curMethod.variables.get(identifier);
         }
         // Check if it is field in the class
         if (curClass.fields.containsKey(identifier)) {
-            return;
+            return curClass.fields.get(identifier);
         }
         // Check if it has parent class with this field
         while (curClass.parentClassName != null) {
             SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(curClass.parentClassName);
             if (parentClass.fields.containsKey(identifier)) {
-                return;
+                return parentClass.fields.get(identifier);
             }
             curClass = parentClass;
         }
         // If you are here then this identifier was not found...
         throw new Exception("Unknown symbol '" + identifier + "'");
     }
-
-
 
     /**
      * f0 -> "class"
@@ -121,7 +123,6 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * f12 -> "}"
      */
     public String visit(MethodDeclaration n, SymbolTable symbolTable) throws Exception {
-        ;
         this.currentFunctionName = n.f2.accept(this, symbolTable);
         this.classVar = false;
         this.functionVar = true;
@@ -163,7 +164,9 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      */
     public String visit(AssignmentStatement n, SymbolTable symbolTable) throws Exception {
         String identifier = n.f0.accept(this, symbolTable);
-        look_up_identifier(identifier, symbolTable);
+        String type = look_up_identifier(identifier, symbolTable);
+        System.out.println(identifier + " " + type);
+        this.ExprType = type;
 //        n.f0.accept(this, symbolTable);
 //        n.f1.accept(this, symbolTable);
         n.f2.accept(this, symbolTable);
@@ -424,10 +427,18 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      */
     public String visit(PrimaryExpression n, SymbolTable symbolTable) throws Exception {
         String expression = n.f0.accept(this, symbolTable);
-        // todo na tsekarw ti expr einai false true klp
-        // auto douleuei MONO gia identfier
-        if(expression != null) {
-            look_up_identifier(expression, symbolTable);
+        if (expression != null) {
+            if (expression.equals("true") || expression.equals("false")) {
+                if (!this.ExprType.equals("boolean")) {
+                    throw new Exception("Operations between 'boolean' and '"+this.ExprType+"' are not permitted");
+                }
+            }
+            else {
+                String type = look_up_identifier(expression, symbolTable);
+                if (!this.ExprType.equals(this.ExprType)) {
+                    throw new Exception("Operations between '"+type+ "' and '"+this.ExprType+"' are not permitted");
+                }
+            }
         }
         return null;
     }

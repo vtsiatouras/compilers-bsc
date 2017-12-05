@@ -36,7 +36,7 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
         String mainClassName = n.f1.accept(this, symbolTable);
         // Check if class was declared before
         if (symbolTable.classes.containsKey(mainClassName)) {
-            throw new Exception("Main class has already been declared!");
+            throw new Exception("Main class has already been declared");
         }
         // Store class in the symbol table
         symbolTable.classes.put(mainClassName, new SymbolTable.ClassSymTable());
@@ -75,7 +75,7 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
         className = n.f1.accept(this, symbolTable);
         // Check if class was declared before
         if (symbolTable.classes.containsKey(className)) {
-            throw new Exception("Class '" + className + "' already declared!");
+            throw new Exception("Class '" + className + "' is already declared");
         }
         // Store class in the symbol table
         symbolTable.classes.put(className, new SymbolTable.ClassSymTable());
@@ -110,11 +110,11 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
         parentClassName = n.f3.accept(this, symbolTable);
         // Check if the parent class does not exists
         if (!symbolTable.classes.containsKey(parentClassName)) {
-            throw new Exception("Class '" + parentClassName + "' has not been declared!");
+            throw new Exception("Class '" + parentClassName + "' has not been declared");
         }
         // Check if child class was declared before
         if (symbolTable.classes.containsKey(childClassName)) {
-            throw new Exception("Class '" + childClassName + "' already declared!");
+            throw new Exception("Class '" + childClassName + "' is already declared");
         }
         // Store child class in the symbol table
         symbolTable.classes.put(childClassName, new SymbolTable.ClassSymTable());
@@ -146,7 +146,7 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
         if (this.classVar) {
             SymbolTable.ClassSymTable curClass = symbolTable.classes.get(this.currentClassName);
             if (curClass.fields.containsKey(identifier)) {
-                throw new Exception("Field '" + identifier + "' already declared!");
+                throw new Exception("Field '" + identifier + "' is already declared");
             }
             curClass.fields.put(identifier, type);
         }
@@ -155,7 +155,7 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
             SymbolTable.ClassSymTable curClass = symbolTable.classes.get(this.currentClassName);
             SymbolTable.MethodSymTable curMethod = curClass.methods.get(this.currentFunctionName);
             if (curMethod.variables.containsKey(identifier)) {
-                throw new Exception("Variable '" + identifier + "' already declared!");
+                throw new Exception("Variable '" + identifier + "' is already declared");
             }
             curMethod.variables.put(identifier, type);
         }
@@ -183,7 +183,7 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
         // If method declared already inside the class
         SymbolTable.ClassSymTable curClass = symbolTable.classes.get(this.currentClassName);
         if (curClass.methods.containsKey(methodName)) {
-            throw new ParseException("Method '" + methodName + "' already declared!");
+            throw new ParseException("Method '" + methodName + "' is already declared");
         }
         // Store method to the symbol table
         curClass.methods.put(methodName, new SymbolTable.MethodSymTable());
@@ -245,7 +245,7 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
         SymbolTable.ClassSymTable curClass = symbolTable.classes.get(this.currentClassName);
         SymbolTable.MethodSymTable curMethod = curClass.methods.get(this.currentFunctionName);
         if (curMethod.parameters.containsKey(identifier)) {
-            throw new Exception("Parameter '" + identifier + "' already declared!");
+            throw new Exception("Parameter '" + identifier + "' is already declared");
         }
         curMethod.parameters.put(identifier, type);
         return type;

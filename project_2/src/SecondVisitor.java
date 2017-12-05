@@ -11,6 +11,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
     private String currentFunctionName;
     private Boolean classVar;
     private Boolean functionVar;
+    private String ExprType; //na apo8hkeuw to tupo tou aristerou merous enos stmt
 
     public void look_up_identifier(String identifier, SymbolTable symbolTable) throws Exception {
         // Lookup if this identifier is declared
@@ -165,7 +166,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         look_up_identifier(identifier, symbolTable);
 //        n.f0.accept(this, symbolTable);
 //        n.f1.accept(this, symbolTable);
-//        n.f2.accept(this, symbolTable);
+        n.f2.accept(this, symbolTable);
 //        n.f3.accept(this, symbolTable);
 
         return null;
@@ -422,7 +423,13 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * | BracketExpression()
      */
     public String visit(PrimaryExpression n, SymbolTable symbolTable) throws Exception {
-        return n.f0.accept(this, symbolTable);
+        String expression = n.f0.accept(this, symbolTable);
+        // todo na tsekarw ti expr einai false true klp
+        // auto douleuei MONO gia identfier
+        if(expression != null) {
+            look_up_identifier(expression, symbolTable);
+        }
+        return null;
     }
 
     /**
@@ -436,14 +443,14 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * f0 -> "true"
      */
     public String visit(TrueLiteral n, SymbolTable symbolTable) throws Exception {
-        return n.f0.accept(this, symbolTable);
+        return "true";
     }
 
     /**
      * f0 -> "false"
      */
     public String visit(FalseLiteral n, SymbolTable symbolTable) throws Exception {
-        return n.f0.accept(this, symbolTable);
+        return "false";
     }
 
     /**

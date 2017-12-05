@@ -6,10 +6,10 @@ import java.util.Map;
 
 public class SymbolTable {
 
-    public HashMap<String, ClassSymTable> classes;
+    public LinkedHashMap<String, ClassSymTable> classes;
 
     SymbolTable() {
-        classes = new HashMap<String, ClassSymTable>();
+        classes = new LinkedHashMap<>();
     }
 
     void PrintSymbolTable() {
@@ -17,6 +17,9 @@ public class SymbolTable {
             Object key = entry.getKey();
             System.out.println("CLASS: " + key);
             ClassSymTable classSym = classes.get(key);
+            if (classSym.parentClassName != null){
+                System.out.println("Extends class '"+classSym.parentClassName+"'");
+            }
             System.out.println("\nFIELDS:");
             for (Map.Entry classEntryFields : classSym.fields.entrySet()) {
                 System.out.println("   " + classEntryFields.getValue() + " " + classEntryFields.getKey());
@@ -42,21 +45,21 @@ public class SymbolTable {
                 }
                 System.out.println();
             }
-            System.out.println("====================================");
+            System.out.println("--------------------");
         }
     }
 
     public static class ClassSymTable {
         public String className;
         public String parentClassName;
-        public HashMap<String, String> fields;
-        public HashMap<String, MethodSymTable> methods;
+        public LinkedHashMap<String, String> fields;
+        public LinkedHashMap<String, MethodSymTable> methods;
 
         ClassSymTable() {
             className = null;
             parentClassName = null;
-            fields = new HashMap<String, String>();
-            methods = new HashMap<String, MethodSymTable>();
+            fields = new LinkedHashMap<>();
+            methods = new LinkedHashMap<>();
         }
     }
 
@@ -69,8 +72,8 @@ public class SymbolTable {
         MethodSymTable() {
             methodName = null;
             returnType = null;
-            parameters = new LinkedHashMap<String, String>();
-            variables = new LinkedHashMap<String, String>();
+            parameters = new LinkedHashMap<>();
+            variables = new LinkedHashMap<>();
         }
     }
 

@@ -1,30 +1,16 @@
 import syntaxtree.*;
 import visitor.GJDepthFirst;
 
-import java.util.HashMap;
 import java.util.Iterator;
 
 @SuppressWarnings("Duplicates") // Remove IntelliJ warning about duplicate code
 
 public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
 
-    public String currentClassName;
-    public String currentFunctionName;
-    public Boolean classVar;
-    public Boolean functionParam;
-    public Boolean functionVar;
-
-    /**
-     * f0 -> MainClass()
-     * f1 -> ( TypeDeclaration() )*
-     * f2 -> <EOF>
-     */
-    public String visit(Goal n, SymbolTable symbolTable) throws Exception {
-        String _ret = null;
-        _ret = n.f0.accept(this, symbolTable);
-        _ret = n.f1.accept(this, symbolTable);
-        return _ret;
-    }
+    private String currentClassName;
+    private String currentFunctionName;
+    private Boolean classVar;
+    private Boolean functionVar;
 
     /**
      * f0 -> "class"
@@ -54,22 +40,26 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
         }
         // Store class in the symbol table
         symbolTable.classes.put(mainClassName, new SymbolTable.ClassSymTable());
+        SymbolTable.ClassSymTable curClass = symbolTable.classes.get(mainClassName);
+        curClass.className = mainClassName;
+        curClass.parentClassName = null;
+        // Store main method in class symbol table
+        curClass.methods.put("main", new SymbolTable.MethodSymTable());
+        SymbolTable.MethodSymTable curMethod = curClass.methods.get("main");
+        curMethod.methodName = "main";
+        curMethod.returnType = "void";
+        // Visit main parameter and store it to symbol table
+        String type = "String[]";
+        String param = n.f11.accept(this, symbolTable);
+        curMethod.parameters.put(param, type);
         // Set up visitor's fields to be aware where to check in the symbol table
         this.currentClassName = mainClassName;
-        this.classVar = true;
-        this.currentFunctionName = null;
-        this.functionParam = false;
-        this.functionVar = false;
-
-        return mainClassName;
-    }
-
-    /**
-     * f0 -> ClassDeclaration()
-     * | ClassExtendsDeclaration()
-     */
-    public String visit(TypeDeclaration n, SymbolTable symbolTable) throws Exception {
-        return n.f0.accept(this, symbolTable);
+        this.classVar = false;
+        this.currentFunctionName = "main";
+        this.functionVar = true;
+        // Visit VarDeclaration
+        n.f14.accept(this, symbolTable);
+        return null;
     }
 
     /**
@@ -92,21 +82,16 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
         SymbolTable.ClassSymTable curClass = symbolTable.classes.get(className);
         curClass.className = className;
         curClass.parentClassName = null;
-
         // Set up visitor's fields to be aware where to check in the symbol table
         this.currentClassName = className;
         this.classVar = true;
         this.currentFunctionName = null;
-        this.functionParam = false;
         this.functionVar = false;
-
         // Visit VarDeclaration
-        String varDecl = n.f3.accept(this, symbolTable);
-
+        n.f3.accept(this, symbolTable);
         // Visit MethodDeclaration
-        String funDecl = n.f4.accept(this, symbolTable);
-
-        return varDecl;
+        n.f4.accept(this, symbolTable);
+        return null;
     }
 
     /**
@@ -136,22 +121,16 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
         SymbolTable.ClassSymTable curClass = symbolTable.classes.get(childClassName);
         curClass.className = childClassName;
         curClass.parentClassName = parentClassName;
-
         // Set up visitor's fields to be aware where to check in the symbol table
         this.currentClassName = childClassName;
         this.classVar = true;
         this.currentFunctionName = null;
-        this.functionParam = false;
         this.functionVar = false;
-
         // Visit VarDeclaration
-        String varDecl = n.f5.accept(this, symbolTable);
-
+        n.f5.accept(this, symbolTable);
         // Visit MethodDeclaration
-        String funDecl = n.f6.accept(this, symbolTable);
-
-//        System.out.println("Class Name: " + _ret1 + "extends " + _ret2);
-        return parentClassName;
+        n.f6.accept(this, symbolTable);
+        return null;
     }
 
     /**
@@ -171,13 +150,6 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
             }
             curClass.fields.put(identifier, type);
         }
-
-        // todo auto den xreiazetai telika!
-        // Method parameter
-//        if (this.functionParam) {
-//
-//        }
-
         // Method variable
         if (this.functionVar) {
             SymbolTable.ClassSymTable curClass = symbolTable.classes.get(this.currentClassName);
@@ -187,8 +159,7 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
             }
             curMethod.variables.put(identifier, type);
         }
-
-        return identifier;
+        return null;
     }
 
     /**
@@ -214,21 +185,17 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
         if (curClass.methods.containsKey(methodName)) {
             throw new ParseException("Method '" + methodName + "' already declared!");
         }
-
         // Store method to the symbol table
         curClass.methods.put(methodName, new SymbolTable.MethodSymTable());
         SymbolTable.MethodSymTable curMethod = curClass.methods.get(methodName);
         curMethod.methodName = methodName;
         curMethod.returnType = type;
-
         // Set up visitor's fields to be aware where to check in the symbol table
         this.classVar = false;
         this.currentFunctionName = methodName;
-        this.functionParam = true;
         this.functionVar = false;
         // Visit ParameterList
-        String params = n.f4.accept(this, symbolTable);
-
+        n.f4.accept(this, symbolTable);
         // If the method's class is extended of another class
         if (curClass.parentClassName != null) {
             SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(curClass.parentClassName);
@@ -259,18 +226,14 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
                 }
             }
         }
-
         // Set up visitor's fields to be aware where to check in the symbol table
         this.classVar = false;
         this.currentFunctionName = methodName;
-        this.functionParam = false;
         this.functionVar = true;
         // Visit VarDeclaration
-        String vars = n.f7.accept(this, symbolTable);
-
-        return methodName;
+        n.f7.accept(this, symbolTable);
+        return null;
     }
-
 
     /**
      * f0 -> Type()
@@ -318,4 +281,3 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
         return n.f0.toString();
     }
 }
-//todo na tsekarw kapoia axrhsta return

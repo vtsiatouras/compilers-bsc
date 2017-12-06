@@ -22,7 +22,8 @@ class Main {
                     // Store all the critical information (i.e. class names, fields, methods, params, variables)
                     // in the symbol table.
                     root.accept(firstVisitor, symbolTable);
-                    symbolTable.print_symbol_table();
+//                    symbolTable.print_symbol_table();
+                    symbolTable.type_check_symbol_table();
                     // Typecheck the given program
                     root.accept(secondVisitor, symbolTable);
 //                    symbolTable = null;

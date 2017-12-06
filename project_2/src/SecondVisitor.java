@@ -183,13 +183,18 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
     public String visit(AssignmentStatement n, SymbolTable symbolTable) throws Exception {
         String identifier = n.f0.accept(this, symbolTable);
         String type = look_up_identifier(identifier, symbolTable);
-        System.out.println(identifier + " " + type);
-        this.ExprType = type;
-//        n.f0.accept(this, symbolTable);
-//        n.f1.accept(this, symbolTable);
-        n.f2.accept(this, symbolTable);
-//        n.f3.accept(this, symbolTable);
+        if (type == null) {
+            throw new Exception("Unknown symbol '" + identifier + "'");
+        }
+        this.exprType = type;
+//        this.assignmentStatement = true;
+        String exrpType = n.f2.accept(this, symbolTable);
 
+        if (!this.exprType.equals(exrpType)) {
+            throw new Exception("Operations between '" + this.exprType + "' and '" + exrpType + "' are not permitted");
+        }
+//        this.assignmentStatement = false;
+        this.exprType = null;
         return null;
     }
 
@@ -316,11 +321,15 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * f2 -> PrimaryExpression()
      */
     public String visit(PlusExpression n, SymbolTable symbolTable) throws Exception {
-        String _ret = null;
-        n.f0.accept(this, symbolTable);
-        n.f1.accept(this, symbolTable);
-        n.f2.accept(this, symbolTable);
-        return _ret;
+        this.returnPrimaryExpr = false;
+        String type1 = n.f0.accept(this, symbolTable);
+        this.returnPrimaryExpr = false;
+        String type2 = n.f2.accept(this, symbolTable);
+        if(!type1.equals("int") || !type2.equals("int")) {
+            throw new Exception("'+' operator works only for integers");
+        }
+        this.returnPrimaryExpr = false;
+        return "int";
     }
 
     /**
@@ -329,11 +338,15 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * f2 -> PrimaryExpression()
      */
     public String visit(MinusExpression n, SymbolTable symbolTable) throws Exception {
-        String _ret = null;
-        n.f0.accept(this, symbolTable);
-        n.f1.accept(this, symbolTable);
-        n.f2.accept(this, symbolTable);
-        return _ret;
+        this.returnPrimaryExpr = false;
+        String type1 = n.f0.accept(this, symbolTable);
+        this.returnPrimaryExpr = false;
+        String type2 = n.f2.accept(this, symbolTable);
+        if(!type1.equals("int") || !type2.equals("int")) {
+            throw new Exception("'-' operator works only for integers");
+        }
+        this.returnPrimaryExpr = false;
+        return "int";
     }
 
     /**
@@ -342,11 +355,15 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * f2 -> PrimaryExpression()
      */
     public String visit(TimesExpression n, SymbolTable symbolTable) throws Exception {
-        String _ret = null;
-        n.f0.accept(this, symbolTable);
-        n.f1.accept(this, symbolTable);
-        n.f2.accept(this, symbolTable);
-        return _ret;
+        this.returnPrimaryExpr = false;
+        String type1 = n.f0.accept(this, symbolTable);
+        this.returnPrimaryExpr = false;
+        String type2 = n.f2.accept(this, symbolTable);
+        if(!type1.equals("int") || !type2.equals("int")) {
+            throw new Exception("'*' operator works only for integers");
+        }
+        this.returnPrimaryExpr = false;
+        return "int";
     }
 
     /**

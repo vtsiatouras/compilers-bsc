@@ -265,13 +265,15 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * f4 -> ";"
      */
     public String visit(PrintStatement n, SymbolTable symbolTable) throws Exception {
-        String _ret = null;
-        n.f0.accept(this, symbolTable);
-        n.f1.accept(this, symbolTable);
-        n.f2.accept(this, symbolTable);
-        n.f3.accept(this, symbolTable);
-        n.f4.accept(this, symbolTable);
-        return _ret;
+        this.returnPrimaryExpr = true;
+        this.exprType = "int";
+        String type = n.f2.accept(this, symbolTable);
+        if (!type.equals("int")) {
+            throw new Exception("Only integers allowed to be printed");
+        }
+        this.returnPrimaryExpr = false;
+        this.exprType = null;
+        return null;
     }
 
     /**
@@ -403,14 +405,31 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * f5 -> ")"
      */
     public String visit(MessageSend n, SymbolTable symbolTable) throws Exception {
-        String _ret = null;
-        n.f0.accept(this, symbolTable);
-        n.f1.accept(this, symbolTable);
-        n.f2.accept(this, symbolTable);
-        n.f3.accept(this, symbolTable);
+        this.returnPrimaryExpr = true;
+        // Visit PrimaryExpression
+        String var = n.f0.accept(this, symbolTable);
+        String varType = look_up_identifier(var, symbolTable);
+        // The only case that is allowed without object name
+        // Is when the object is created in the same line
+        if (varType == null) {
+            if (!symbolTable.classes.containsKey(var)) {
+                throw new Exception("Unknown symbol '" + var + "'");
+            } else {
+                varType = var;
+            }
+
+        }
+
+        String methodName = n.f2.accept(this, symbolTable);
+        // Lookup if method exists
+        String methodType = look_up_methods(methodName, varType, symbolTable);
+//        if (!this.exprType.equals(methodType)) {
+//            throw new Exception("Operations between '" + this.exprType + "' and '" + methodType + "' are not permitted");
+//        }
         n.f4.accept(this, symbolTable);
-        n.f5.accept(this, symbolTable);
-        return _ret;
+
+//        this.returnPrimaryExpr = false;
+        return methodType;
     }
 
     /**
@@ -462,27 +481,102 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      */
     public String visit(PrimaryExpression n, SymbolTable symbolTable) throws Exception {
         String expression = n.f0.accept(this, symbolTable);
-        if (expression != null) {
-            if (expression.equals("true") || expression.equals("false")) {
-                if (!this.ExprType.equals("boolean")) {
-                    throw new Exception("Operations between 'boolean' and '"+this.ExprType+"' are not permitted");
-                }
+        if (expression == null) {
+            return null;
+        }
+        if (this.returnPrimaryExpr) {
+//            this.returnPrimaryExpr = false;
+            return expression;
+        }
+
+        // The below are for simple assignments
+        // If it is integer literal
+        if (expression.equals("##INT_LIT")) {
+            if (!this.exprType.equals("int")) {
+                throw new Exception("Operations between '" + this.exprType + "' and 'int' are not permitted");
             }
-            else {
-                String type = look_up_identifier(expression, symbolTable);
-                if (!this.ExprType.equals(this.ExprType)) {
-                    throw new Exception("Operations between '"+type+ "' and '"+this.ExprType+"' are not permitted");
+            return "int";
+        } else if (expression.equals("true") || expression.equals("false")) {
+            if (!this.exprType.equals("boolean")) {
+                throw new Exception("Operations between '" + this.exprType + "' and 'boolean' are not permitted");
+            }
+            return "boolean";
+        } else if (expression.equals("this")) {
+            return "this";
+        } else {
+            String type = look_up_identifier(expression, symbolTable);
+            if (type == null) {
+                throw new Exception("Unknown symbol '" + expression + "'");
+            }
+            if (!this.exprType.equals(type)) {
+                throw new Exception("Operations between '" + this.exprType + "' and '" + type + "' are not permitted");
+            }
+            return type;
+        }
+    }
+
+//    /**
+//     * f0 -> "new"
+//     * f1 -> "int"
+//     * f2 -> "["
+//     * f3 -> Expression()
+//     * f4 -> "]"
+//     */
+//    public R visit(ArrayAllocationExpression n, A argu) throws Exception {
+//        R _ret=null;
+//        n.f0.accept(this, argu);
+//        n.f1.accept(this, argu);
+//        n.f2.accept(this, argu);
+//        n.f3.accept(this, argu);
+//        n.f4.accept(this, argu);
+//        return _ret;
+//    }
+
+    /**
+     * f0 -> "new"
+     * f1 -> Identifier()
+     * f2 -> "("
+     * f3 -> ")"
+     */
+    public String visit(AllocationExpression n, SymbolTable symbolTable) throws Exception {
+        this.returnPrimaryExpr = true;
+        String identifier = n.f1.accept(this, symbolTable);
+        if (symbolTable.classes.containsKey(identifier)) {
+            return symbolTable.classes.get(identifier).className;
+        }
+        SymbolTable.ClassSymTable curClass = symbolTable.classes.get(identifier);
+        String type = curClass.className;
+
+        // If the types of the assignment are not matching
+        if (!exprType.equals(type)) {
+            // Check if it has parent with that type
+            while (curClass.parentClassName != null) {
+                if (exprType.equals(curClass.parentClassName)) {
+                    return curClass.parentClassName;
                 }
+                curClass = symbolTable.classes.get(curClass.parentClassName);
             }
         }
-        return null;
+        throw new Exception("Operations between '" + this.exprType + "' and '" + type + "' are not permitted");
+    }
+
+    /**
+     * f0 -> "("
+     * f1 -> Expression()
+     * f2 -> ")"
+     */
+    public String visit(BracketExpression n, SymbolTable symbolTable) throws Exception {
+        this.returnPrimaryExpr = true;
+        String type = n.f1.accept(this, symbolTable);
+//        this.returnPrimaryExpr = false;
+        return type;
     }
 
     /**
      * f0 -> <INTEGER_LITERAL>
      */
-    public String visit(IntegerLiteral n, SymbolTable symbolTable) throws Exception {
-        return n.f0.accept(this, symbolTable);
+    public String visit(IntegerLiteral n, SymbolTable symbolTable) throws Exception { ;
+        return "##INT_LIT";
     }
 
     /**
@@ -504,6 +598,13 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      */
     public String visit(Identifier n, SymbolTable symbolTable) throws Exception {
         return n.f0.toString();
+    }
+
+    /**
+     * f0 -> "this"
+     */
+    public String visit(ThisExpression n, SymbolTable symbolTable) throws Exception {
+        return "this";
     }
 
 }

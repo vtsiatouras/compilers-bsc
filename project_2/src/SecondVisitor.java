@@ -330,7 +330,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         if(!type1.equals("int") || !type2.equals("int")) {
             throw new Exception("'+' operator works only for integers");
         }
-        this.returnPrimaryExpr = false;
+        this.returnPrimaryExpr = true;
         return "int";
     }
 
@@ -375,12 +375,16 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * f3 -> "]"
      */
     public String visit(ArrayLookup n, SymbolTable symbolTable) throws Exception {
-        String _ret = null;
-        n.f0.accept(this, symbolTable);
-        n.f1.accept(this, symbolTable);
-        n.f2.accept(this, symbolTable);
-        n.f3.accept(this, symbolTable);
-        return _ret;
+
+        String type1 = n.f0.accept(this, symbolTable);
+        if(!type1.equals("int[]")){
+            throw new Exception("This is not type of int[]");
+        }
+        String type2 = n.f2.accept(this, symbolTable);
+        if(!type2.equals("int")){
+            throw new Exception("int arrays must have type of 'int' iterators");
+        }
+        return "int";
     }
 
     /**
@@ -492,14 +496,14 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         // The below are for simple assignments
         // If it is integer literal
         if (expression.equals("##INT_LIT")) {
-            if (!this.exprType.equals("int")) {
-                throw new Exception("Operations between '" + this.exprType + "' and 'int' are not permitted");
-            }
+//            if (!this.exprType.equals("int")) {
+//                throw new Exception("Operations between '" + this.exprType + "' and 'int' are not permitted");
+//            }
             return "int";
         } else if (expression.equals("true") || expression.equals("false")) {
-            if (!this.exprType.equals("boolean")) {
-                throw new Exception("Operations between '" + this.exprType + "' and 'boolean' are not permitted");
-            }
+//            if (!this.exprType.equals("boolean")) {
+//                throw new Exception("Operations between '" + this.exprType + "' and 'boolean' are not permitted");
+//            }
             return "boolean";
         } else if (expression.equals("this")) {
             return "this";
@@ -508,29 +512,28 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
             if (type == null) {
                 throw new Exception("Unknown symbol '" + expression + "'");
             }
-            if (!this.exprType.equals(type)) {
-                throw new Exception("Operations between '" + this.exprType + "' and '" + type + "' are not permitted");
-            }
+//            if (!this.exprType.equals(type)) {
+//                throw new Exception("Operations between '" + this.exprType + "' and '" + type + "' are not permitted");
+//            }
             return type;
         }
     }
 
-//    /**
-//     * f0 -> "new"
-//     * f1 -> "int"
-//     * f2 -> "["
-//     * f3 -> Expression()
-//     * f4 -> "]"
-//     */
-//    public R visit(ArrayAllocationExpression n, A argu) throws Exception {
-//        R _ret=null;
-//        n.f0.accept(this, argu);
-//        n.f1.accept(this, argu);
-//        n.f2.accept(this, argu);
-//        n.f3.accept(this, argu);
-//        n.f4.accept(this, argu);
-//        return _ret;
-//    }
+    /**
+     * f0 -> "new"
+     * f1 -> "int"
+     * f2 -> "["
+     * f3 -> Expression()
+     * f4 -> "]"
+     */
+    public String visit(ArrayAllocationExpression n, SymbolTable symbolTable) throws Exception {
+        String type = n.f3.accept(this, symbolTable);
+        if (!type.equals("int")) {
+            throw new Exception("Array allocation size must be integer");
+        }
+        this.returnPrimaryExpr = true;
+        return "int[]";
+    }
 
     /**
      * f0 -> "new"
@@ -568,7 +571,6 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
     public String visit(BracketExpression n, SymbolTable symbolTable) throws Exception {
         this.returnPrimaryExpr = true;
         String type = n.f1.accept(this, symbolTable);
-//        this.returnPrimaryExpr = false;
         return type;
     }
 

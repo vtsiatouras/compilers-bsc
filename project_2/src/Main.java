@@ -26,6 +26,7 @@ class Main {
                     symbolTable.type_check_symbol_table();
                     // Typecheck the given program
                     root.accept(secondVisitor, symbolTable);
+                    System.out.println("Parse Successful\n");
 //                    symbolTable = null;
                 } catch (Exception ex) {
                     System.err.println(ex.getMessage());

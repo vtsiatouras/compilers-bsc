@@ -1,8 +1,6 @@
 import syntaxtree.*;
 import visitor.GJDepthFirst;
 
-import java.util.Iterator;
-
 @SuppressWarnings("Duplicates") // Remove IntelliJ warning about duplicate code
 
 public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
@@ -11,7 +9,8 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
     private String currentFunctionName;
     private Boolean classVar;
     private Boolean functionVar;
-    private String ExprType; //na apo8hkeuw to tupo tou aristerou merous enos stmt
+    private String exprType;
+    private Boolean returnPrimaryExpr;
 
     public String look_up_identifier(String identifier, SymbolTable symbolTable) throws Exception {
         // Lookup if this identifier is declared before
@@ -38,7 +37,26 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
             curClass = parentClass;
         }
         // If you are here then this identifier was not found...
-        throw new Exception("Unknown symbol '" + identifier + "'");
+        return null;
+//        throw new Exception("Unknown symbol '" + identifier + "'");
+    }
+
+    public String look_up_methods(String methodName, String className, SymbolTable symbolTable) throws Exception {
+        SymbolTable.ClassSymTable classSym = symbolTable.classes.get(className);
+        if (classSym.methods.containsKey(methodName)) {
+            return classSym.methods.get(methodName).returnType;
+
+        }
+        // Check if it has parent class with this method
+        while (classSym.parentClassName != null) {
+            SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(classSym.parentClassName);
+            if (parentClass.methods.containsKey(methodName)) {
+                return parentClass.methods.get(methodName).returnType;
+            }
+            classSym = parentClass;
+        }
+        return null;
+//        throw new Exception("Unknown method '" + methodName + "'");
     }
 
     /**

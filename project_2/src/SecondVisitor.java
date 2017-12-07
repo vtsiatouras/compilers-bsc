@@ -356,7 +356,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         String type1 = n.f0.accept(this, symbolTable);
         this.returnPrimaryExpr = false;
         String type2 = n.f2.accept(this, symbolTable);
-        if(!type1.equals("int") || !type2.equals("int")) {
+        if (!type1.equals("int") || !type2.equals("int")) {
             throw new Exception("'+' operator works only for integers");
         }
         this.returnPrimaryExpr = true;
@@ -373,7 +373,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         String type1 = n.f0.accept(this, symbolTable);
         this.returnPrimaryExpr = false;
         String type2 = n.f2.accept(this, symbolTable);
-        if(!type1.equals("int") || !type2.equals("int")) {
+        if (!type1.equals("int") || !type2.equals("int")) {
             throw new Exception("'-' operator works only for integers");
         }
         this.returnPrimaryExpr = false;
@@ -390,7 +390,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         String type1 = n.f0.accept(this, symbolTable);
         this.returnPrimaryExpr = false;
         String type2 = n.f2.accept(this, symbolTable);
-        if(!type1.equals("int") || !type2.equals("int")) {
+        if (!type1.equals("int") || !type2.equals("int")) {
             throw new Exception("'*' operator works only for integers");
         }
         this.returnPrimaryExpr = false;
@@ -404,13 +404,12 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * f3 -> "]"
      */
     public String visit(ArrayLookup n, SymbolTable symbolTable) throws Exception {
-
         String type1 = n.f0.accept(this, symbolTable);
-        if(!type1.equals("int[]")){
+        if (!type1.equals("int[]")) {
             throw new Exception("This is not type of int[]");
         }
         String type2 = n.f2.accept(this, symbolTable);
-        if(!type2.equals("int")){
+        if (!type2.equals("int")) {
             throw new Exception("int arrays must have type of 'int' iterators");
         }
         return "int";
@@ -455,13 +454,33 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
 
         String methodName = n.f2.accept(this, symbolTable);
         // Lookup if method exists
-        String methodType = look_up_methods(methodName, varType, symbolTable);
-//        if (!this.exprType.equals(methodType)) {
-//            throw new Exception("Operations between '" + this.exprType + "' and '" + methodType + "' are not permitted");
-//        }
-        n.f4.accept(this, symbolTable);
+        String[] retValues = look_up_methods(methodName, varType, symbolTable);
+        String methodType = retValues[0];
+        String className = retValues[1];
 
-//        this.returnPrimaryExpr = false;
+        // Create an array to hold up the types of parameters
+        // If it is already created then it is assumed where are in nested call
+        // Hold the data of the current array and create a new one to typecheck the nested call
+        ArrayList<String> backupMethodArgs = null;
+        boolean methodArgsTempFlag = false;
+        if(this.methodArgs!=null) {
+            methodArgsTempFlag = true;
+            backupMethodArgs = new ArrayList<>(this.methodArgs);
+        }
+        this.methodArgs = new ArrayList<String>();
+
+        // Visit ExpressionList
+        n.f4.accept(this, symbolTable);
+        // Lookup arg types with the parameter types that are defined in the method that is called
+        check_args_method(methodName, className, this.methodArgs, symbolTable);
+
+        // Erase the array
+        this.methodArgs = null;
+        // Restore previous array if was existed before the MessageSend visit
+        if(methodArgsTempFlag) {
+            this.methodArgs = new ArrayList<>(backupMethodArgs);
+        }
+        this.returnPrimaryExpr = false;
         return methodType;
     }
 
@@ -470,10 +489,12 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * f1 -> ExpressionTail()
      */
     public String visit(ExpressionList n, SymbolTable symbolTable) throws Exception {
-        String _ret = null;
-        n.f0.accept(this, symbolTable);
+        this.returnPrimaryExpr = false;
+        String var = n.f0.accept(this, symbolTable);
+        System.out.println(var);
+        this.methodArgs.add(var);
         n.f1.accept(this, symbolTable);
-        return _ret;
+        return null;
     }
 
     /**
@@ -488,10 +509,8 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * f1 -> Expression()
      */
     public String visit(ExpressionTerm n, SymbolTable symbolTable) throws Exception {
-        String _ret = null;
-        n.f0.accept(this, symbolTable);
-        n.f1.accept(this, symbolTable);
-        return _ret;
+        this.methodArgs.add(n.f1.accept(this, symbolTable));
+        return null;
     }
 
     /**
@@ -518,7 +537,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
             return null;
         }
         if (this.returnPrimaryExpr) {
-//            this.returnPrimaryExpr = false;
+            this.returnPrimaryExpr = false;
             return expression;
         }
 
@@ -528,13 +547,16 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
 //            if (!this.exprType.equals("int")) {
 //                throw new Exception("Operations between '" + this.exprType + "' and 'int' are not permitted");
 //            }
+            this.returnPrimaryExpr = false;
             return "int";
         } else if (expression.equals("true") || expression.equals("false")) {
 //            if (!this.exprType.equals("boolean")) {
 //                throw new Exception("Operations between '" + this.exprType + "' and 'boolean' are not permitted");
 //            }
+            this.returnPrimaryExpr = false;
             return "boolean";
         } else if (expression.equals("this")) {
+            this.returnPrimaryExpr = false;
             return "this";
         } else {
             String type = look_up_identifier(expression, symbolTable);
@@ -544,6 +566,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
 //            if (!this.exprType.equals(type)) {
 //                throw new Exception("Operations between '" + this.exprType + "' and '" + type + "' are not permitted");
 //            }
+            this.returnPrimaryExpr = false;
             return type;
         }
     }
@@ -573,6 +596,10 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
     public String visit(AllocationExpression n, SymbolTable symbolTable) throws Exception {
         this.returnPrimaryExpr = true;
         String identifier = n.f1.accept(this, symbolTable);
+        // Return if the type is correct
+        if (!symbolTable.classes.containsKey(identifier)) {
+            throw new Exception("Unkown symbol '" + identifier + "'");
+        }
         SymbolTable.ClassSymTable curClass = symbolTable.classes.get(identifier);
         String type = curClass.className;
         // If the types of the assignment are not matching
@@ -585,7 +612,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
                 curClass = symbolTable.classes.get(curClass.parentClassName);
             }
         }
-        throw new Exception("Operations between '" + this.exprType + "' and '" + type + "' are not permitted");
+        return identifier;
     }
 
     /**
@@ -596,13 +623,14 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
     public String visit(BracketExpression n, SymbolTable symbolTable) throws Exception {
         this.returnPrimaryExpr = true;
         String type = n.f1.accept(this, symbolTable);
+        this.returnPrimaryExpr = true;
         return type;
     }
 
     /**
      * f0 -> <INTEGER_LITERAL>
      */
-    public String visit(IntegerLiteral n, SymbolTable symbolTable) throws Exception { ;
+    public String visit(IntegerLiteral n, SymbolTable symbolTable) throws Exception {
         return "##INT_LIT";
     }
 

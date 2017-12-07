@@ -1,6 +1,9 @@
 import syntaxtree.*;
 import visitor.GJDepthFirst;
 
+import java.util.ArrayList;
+import java.util.Map;
+
 @SuppressWarnings("Duplicates") // Remove IntelliJ warning about duplicate code
 
 public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
@@ -11,6 +14,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
     private Boolean functionVar;
     private String exprType;
     private Boolean returnPrimaryExpr;
+    private ArrayList<String> methodArgs;
 
     public String look_up_identifier(String identifier, SymbolTable symbolTable) throws Exception {
         // Lookup if this identifier is declared before
@@ -41,22 +45,47 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
 //        throw new Exception("Unknown symbol '" + identifier + "'");
     }
 
-    public String look_up_methods(String methodName, String className, SymbolTable symbolTable) throws Exception {
+    public String[] look_up_methods(String methodName, String className, SymbolTable symbolTable) throws Exception {
         SymbolTable.ClassSymTable classSym = symbolTable.classes.get(className);
         if (classSym.methods.containsKey(methodName)) {
-            return classSym.methods.get(methodName).returnType;
+            // Return your type and class name
+            return new String[] {classSym.methods.get(methodName).returnType, classSym.className};
 
         }
-        // Check if it has parent class with this method
+        // Check if this method is in parent class
         while (classSym.parentClassName != null) {
             SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(classSym.parentClassName);
             if (parentClass.methods.containsKey(methodName)) {
-                return parentClass.methods.get(methodName).returnType;
+                // Return your type and class name
+                return new String[] {parentClass.methods.get(methodName).returnType, parentClass.className};
             }
             classSym = parentClass;
         }
         return null;
 //        throw new Exception("Unknown method '" + methodName + "'");
+    }
+
+    public void check_args_method(String methodName, String className, ArrayList args, SymbolTable symbolTable) throws Exception {
+        SymbolTable.ClassSymTable classSym = symbolTable.classes.get(className);
+        SymbolTable.MethodSymTable methodSymTable = classSym.methods.get(methodName);
+        // If the args array is empty
+        if(args.isEmpty()){
+            if(!methodSymTable.parameters.isEmpty()){
+                throw new Exception("The number of the given arguments is not matching with the definition of the method '" + methodName + "'");
+            }
+        }
+        else {
+            if (methodSymTable.parameters.size() != args.size()) {
+                throw new Exception("The number of the given arguments is not matching with the definition of the method '" + methodName + "'");
+            }
+            for (Map.Entry methodEntryFunctions : methodSymTable.parameters.entrySet()) {
+                String paramType = methodEntryFunctions.getValue().toString();
+//            if () {
+//                throw new Exception("Type of '"+  +"");
+//            }
+            }
+        }
+
     }
 
     /**

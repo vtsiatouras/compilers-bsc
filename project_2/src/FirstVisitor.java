@@ -197,7 +197,7 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
         // Visit ParameterList
         n.f4.accept(this, symbolTable);
         // If the method's class is extended of another class
-        if (curClass.parentClassName != null) {
+        while (curClass.parentClassName != null) {
             SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(curClass.parentClassName);
             // If the method with the same name was declared in parent class
             // Then OVERRIDE is only allowed and NOT overloading
@@ -206,7 +206,7 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
                 SymbolTable.MethodSymTable parentMethod = parentClass.methods.get(methodName);
                 // Compare types
                 if (!parentMethod.returnType.equals(curMethod.returnType)) {
-                    throw new Exception("Method '" + curMethod.methodName + "' is type of '" + curMethod.returnType + "'. Declared before at parent class '" + parentClass.parentClassName + "' with type of '" + parentMethod.returnType + "'");
+                    throw new Exception("Method '" + curMethod.methodName + "' is type of '" + curMethod.returnType + "'. Declared before at parent class '" + parentClass.className + "' with type of '" + parentMethod.returnType + "'");
                 }
                 // Compare number of parameters
                 if (curMethod.parameters.size() != parentMethod.parameters.size()){
@@ -225,6 +225,7 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
                     }
                 }
             }
+            curClass = parentClass;
         }
         // Set up visitor's fields to be aware where to check in the symbol table
         this.classVar = false;

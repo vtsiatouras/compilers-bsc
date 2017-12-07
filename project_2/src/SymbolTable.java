@@ -1,6 +1,7 @@
-import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 //todo na tsekarw pou 8elei linkedhashmap gia na exw order
 
@@ -90,6 +91,35 @@ public class SymbolTable {
         }
     }
 
+    void calculate_offsets() {
+//        int classOffset, functionOffset;
+        Map<String, Entry<Integer, Integer>> offsetTable = new HashMap<String, Entry<Integer,Integer>>();
+        for (Map.Entry entry : classes.entrySet()) {
+            Object key = entry.getKey();
+            ClassSymTable classSym = classes.get(key);
+            // If it is child class get parent's offset
+            if (classSym.parentClassName != null) {
+                Object curOffset = offsetTable.get(classSym.parentClassName);
+            } else {
+
+            }
+            System.out.println("\nFIELDS:");
+            for (Map.Entry classEntryFields : classSym.fields.entrySet()) {
+                System.out.println("   " + classEntryFields.getValue() + " " + classEntryFields.getKey());
+            }
+            System.out.println("\nFUNCTIONS:");
+            for (Map.Entry classEntryFunctions : classSym.methods.entrySet()) {
+                Object keyMethod = classEntryFunctions.getKey();
+                MethodSymTable methSym = classSym.methods.get(keyMethod);
+
+                for (Map.Entry methodEntryFunctions : methSym.variables.entrySet()) {
+                    System.out.println("        " + methodEntryFunctions.getValue() + " " + methodEntryFunctions.getKey());
+                }
+                System.out.println();
+            }
+        }
+    }
+
     public static class ClassSymTable {
         public String className;
         public String parentClassName;
@@ -107,6 +137,7 @@ public class SymbolTable {
     public static class MethodSymTable {
         public String methodName;
         public String returnType;
+        public Boolean override;
         public LinkedHashMap<String, String> parameters;
         public LinkedHashMap<String, String> variables;
 

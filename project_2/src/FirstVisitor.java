@@ -190,6 +190,7 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
         SymbolTable.MethodSymTable curMethod = curClass.methods.get(methodName);
         curMethod.methodName = methodName;
         curMethod.returnType = type;
+        curMethod.override = false;
         // Set up visitor's fields to be aware where to check in the symbol table
         this.classVar = false;
         this.currentFunctionName = methodName;
@@ -224,6 +225,7 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
                         throw new Exception("Method '" + curMethod.methodName + "' in class '" + curClass.className + "' can't override because it has different parameters");
                     }
                 }
+                curMethod.override = true;
             }
             curClass = parentClass;
         }

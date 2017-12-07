@@ -544,12 +544,8 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
     public String visit(AllocationExpression n, SymbolTable symbolTable) throws Exception {
         this.returnPrimaryExpr = true;
         String identifier = n.f1.accept(this, symbolTable);
-        if (symbolTable.classes.containsKey(identifier)) {
-            return symbolTable.classes.get(identifier).className;
-        }
         SymbolTable.ClassSymTable curClass = symbolTable.classes.get(identifier);
         String type = curClass.className;
-
         // If the types of the assignment are not matching
         if (!exprType.equals(type)) {
             // Check if it has parent with that type

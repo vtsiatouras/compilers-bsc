@@ -2,7 +2,6 @@ import syntaxtree.*;
 import visitor.GJDepthFirst;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 @SuppressWarnings("Duplicates") // Remove IntelliJ warning about duplicate code
 
@@ -10,8 +9,6 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
 
     private String currentClassName;
     private String currentFunctionName;
-    private Boolean classVar;
-    private Boolean functionVar;
     private String exprType;
     private Boolean returnPrimaryExpr;
     private ArrayList<String> methodArgs;
@@ -133,8 +130,6 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
     public String visit(MainClass n, SymbolTable symbolTable) throws Exception {
         this.currentClassName = n.f1.accept(this, symbolTable);
         this.currentFunctionName = "main";
-        this.classVar = false;
-        this.functionVar = true;
         // Visit Statement
         n.f15.accept(this, symbolTable);
         return null;
@@ -150,8 +145,6 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      */
     public String visit(ClassDeclaration n, SymbolTable symbolTable) throws Exception {
         this.currentClassName = n.f1.accept(this, symbolTable);
-        this.classVar = false;
-        this.functionVar = true;
         // Visit MethodDeclaration
         n.f4.accept(this, symbolTable);
         return null;
@@ -169,8 +162,6 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      */
     public String visit(ClassExtendsDeclaration n, SymbolTable symbolTable) throws Exception {
         this.currentClassName = n.f1.accept(this, symbolTable);
-        this.classVar = false;
-        this.functionVar = true;
         // Visit MethodDeclaration
         n.f6.accept(this, symbolTable);
         return null;
@@ -194,8 +185,6 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
     public String visit(MethodDeclaration n, SymbolTable symbolTable) throws Exception {
 //        String type = n.f1.accept(this, symbolTable);
         this.currentFunctionName = n.f2.accept(this, symbolTable);
-        this.classVar = false;
-        this.functionVar = true;
         // Visit Statement
         n.f8.accept(this, symbolTable);
         String retType = n.f10.accept(this, symbolTable);
@@ -249,7 +238,28 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         String exrpType = n.f2.accept(this, symbolTable);
 
         if (!this.exprType.equals(exrpType)) {
-            throw new Exception("Operations between '" + this.exprType + "' and '" + exrpType + "' are not permitted");
+            // The only case that this is allowed is when the left var is type of subclass of the right var
+            // Do not execute the below for primitive types
+            boolean foundType = false;
+            if (!this.exprType.equals("int") && !this.exprType.equals("int[]") && !this.exprType.equals("boolean")) {
+
+                SymbolTable.ClassSymTable tempSym = symbolTable.classes.get(exrpType);
+                // Iterate your parents
+                while (tempSym.parentClassName != null) {
+                    SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(tempSym.parentClassName);
+                    // If you found a parent with this type name
+                    if (parentClass.className.equals(this.exprType)) {
+                        // Return your type and class name
+                        foundType = true;
+                        break;
+                    }
+                    tempSym = parentClass;
+                }
+                // Continue to the next argument
+            }
+            if (!foundType) {
+                throw new Exception("Operations between '" + this.exprType + "' and '" + exrpType + "' are not permitted");
+            }
         }
 //        this.assignmentStatement = false;
         this.exprType = null;

@@ -9,11 +9,12 @@ class Main {
             System.exit(1);
         }
         FileInputStream fis = null;
-        for (int i = 0; i < args.length; i++) {
+//        for (int i = 0; i < args.length; i++) {
+        for (String inputFile : args) {
             try {
-                fis = new FileInputStream(args[i]);
+                fis = new FileInputStream(inputFile);
                 MiniJavaParser parser = new MiniJavaParser(fis);
-                System.out.println("\nParsing '"+args[i]+"'");
+                System.err.println("\nParsing '" + inputFile + "'");
                 System.out.flush();
                 SymbolTable symbolTable = new SymbolTable();
                 FirstVisitor firstVisitor = new FirstVisitor();
@@ -27,14 +28,10 @@ class Main {
                     symbolTable.type_check_symbol_table();
                     // Typecheck the given program
                     root.accept(secondVisitor, symbolTable);
-                    System.out.println("Parse Successful\n");
-                    symbolTable.calculate_offsets();
-                    System.out.flush();
-//                    symbolTable = null;
+                    System.err.println("Parse Successful");
+//                    symbolTable.calculate_offsets();
                 } catch (Exception ex) {
                     System.err.println(ex.getMessage());
-                } finally {
-//                    symbolTable = null;
                 }
             } catch (ParseException ex) {
                 System.out.println(ex.getMessage());

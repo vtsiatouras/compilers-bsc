@@ -2,9 +2,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-
-//todo na tsekarw pou 8elei linkedhashmap gia na exw order
 
 public class SymbolTable {
 
@@ -108,7 +105,6 @@ public class SymbolTable {
             // If it is child class get parent's offset
             if (classSym.parentClassName != null && !classSym.parentClassName.equals(mainClassName)) {
                 ArrayList<Integer> curOffset = offsetTable.get(classSym.parentClassName);
-                System.out.println(curOffset.get(0)+" "+curOffset.get(1));
                 fieldOffset = curOffset.get(0);
                 methodOffset = curOffset.get(1);
             } else {

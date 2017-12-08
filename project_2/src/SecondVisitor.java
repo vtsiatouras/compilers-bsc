@@ -213,7 +213,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
             throw new Exception("Unknown symbol '" + identifier + "'");
         }
         this.exprType = type;
-//        this.assignmentStatement = true;
+        this.returnPrimaryExpr = false;
         String exrpType = n.f2.accept(this, symbolTable);
 
         if (!this.exprType.equals(exrpType)) {
@@ -223,8 +223,6 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         this.exprType = null;
         return null;
     }
-
-    // TODO
 
     /**
      * f0 -> Identifier()
@@ -236,15 +234,25 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * f6 -> ";"
      */
     public String visit(ArrayAssignmentStatement n, SymbolTable symbolTable) throws Exception {
-        String _ret = null;
-        n.f0.accept(this, symbolTable);
-        n.f1.accept(this, symbolTable);
-        n.f2.accept(this, symbolTable);
-        n.f3.accept(this, symbolTable);
-        n.f4.accept(this, symbolTable);
-        n.f5.accept(this, symbolTable);
-        n.f6.accept(this, symbolTable);
-        return _ret;
+        String identifier = n.f0.accept(this, symbolTable);
+        String type = look_up_identifier(identifier, symbolTable);
+        if (type == null) {
+            throw new Exception("Unknown symbol '" + identifier + "'");
+        }
+        if (!type.equals("int[]")) {
+            throw new Exception("Symbol '" + identifier + "' is type of '" + type + "' not type of 'int[]'");
+        }
+        this.returnPrimaryExpr = false;
+        String expr1Type = n.f2.accept(this, symbolTable);
+        if (!expr1Type.equals("int")) {
+            throw new Exception("Expression inside array brackets must be type of 'int'");
+        }
+        this.returnPrimaryExpr = false;
+        String expr2Type = n.f5.accept(this, symbolTable);
+        if (!expr1Type.equals("int")) {
+            throw new Exception("Assignment to element of int[] with type of '" + expr2Type + "' is not allowed");
+        }
+        return null;
     }
 
     //TODO
@@ -299,6 +307,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
     public String visit(PrintStatement n, SymbolTable symbolTable) throws Exception {
         this.returnPrimaryExpr = true;
         this.exprType = "int";
+        this.returnPrimaryExpr = false;
         String type = n.f2.accept(this, symbolTable);
         if (!type.equals("int")) {
             throw new Exception("Only integers allowed to be printed");
@@ -353,7 +362,6 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         return _ret;
     }
 
-    //TODO
 
     /**
      * f0 -> PrimaryExpression()
@@ -424,19 +432,17 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         return "int";
     }
 
-    //TODO
-
     /**
      * f0 -> PrimaryExpression()
      * f1 -> "."
      * f2 -> "length"
      */
     public String visit(ArrayLength n, SymbolTable symbolTable) throws Exception {
-        String _ret = null;
-        n.f0.accept(this, symbolTable);
-        n.f1.accept(this, symbolTable);
-        n.f2.accept(this, symbolTable);
-        return _ret;
+        String type = n.f0.accept(this, symbolTable);
+        if (!type.equals("int[]")) {
+            throw new Exception("This is not type of int[]");
+        }
+        return "int";
     }
 
     /**
@@ -451,7 +457,13 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         this.returnPrimaryExpr = true;
         // Visit PrimaryExpression
         String var = n.f0.accept(this, symbolTable);
-        String varType = look_up_identifier(var, symbolTable);
+        String varType;
+        // Use current Class type if 'this' is used
+        if (var.equals("this")) {
+            varType = this.currentClassName;
+        } else {
+            varType = look_up_identifier(var, symbolTable);
+        }
         // The only case that is allowed without object name
         // Is when the object is created in the same line
         if (varType == null) {
@@ -564,7 +576,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
             return "boolean";
         } else if (expression.equals("this")) {
             this.returnPrimaryExpr = false;
-            return "this";
+            return this.currentClassName;
         } else {
             String type = look_up_identifier(expression, symbolTable);
             if (type == null) {

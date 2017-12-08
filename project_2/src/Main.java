@@ -13,7 +13,7 @@ class Main {
             try {
                 fis = new FileInputStream(args[i]);
                 MiniJavaParser parser = new MiniJavaParser(fis);
-                System.out.println("Parsing '"+args[i]+"'");
+                System.out.println("\nParsing '"+args[i]+"'");
                 SymbolTable symbolTable = new SymbolTable();
                 FirstVisitor firstVisitor = new FirstVisitor();
                 SecondVisitor secondVisitor = new SecondVisitor();
@@ -26,8 +26,9 @@ class Main {
                     symbolTable.type_check_symbol_table();
                     // Typecheck the given program
                     root.accept(secondVisitor, symbolTable);
-                    symbolTable.calculate_offsets();
                     System.out.println("Parse Successful\n");
+                    symbolTable.calculate_offsets();
+                    System.out.flush();
 //                    symbolTable = null;
                 } catch (Exception ex) {
                     System.err.println(ex.getMessage());

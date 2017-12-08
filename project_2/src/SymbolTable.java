@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -93,10 +94,9 @@ public class SymbolTable {
 
     void calculate_offsets() {
         int fieldOffset, methodOffset;
-        Map<String, Entry<Integer, Integer>> offsetTable = new HashMap<>();
+        HashMap<String, ArrayList<Integer>> offsetTable = new HashMap<>();
         for (Map.Entry entry : classes.entrySet()) {
-            fieldOffset = 0;
-            methodOffset = 0;
+
             Object key = entry.getKey();
             ClassSymTable classSym = classes.get(key);
             // Ignore main class
@@ -104,12 +104,15 @@ public class SymbolTable {
                 continue;
             }
             // If it is child class get parent's offset
-//            if (classSym.parentClassName != null) {
-//                Entry curOffset = offsetTable.get(classSym.parentClassName);
-//
-//            } else {
-//
-//            }
+            if (classSym.parentClassName != null) {
+                ArrayList<Integer> curOffset = offsetTable.get(classSym.parentClassName);
+                System.out.println(curOffset.get(0)+" "+curOffset.get(1));
+                fieldOffset = curOffset.get(0);
+                methodOffset = curOffset.get(1);
+            } else {
+                fieldOffset = 0;
+                methodOffset = 0;
+            }
             System.out.println("-----------Class "+ classSym.className + "-----------");
             System.out.println("---Variables---");
             for (Map.Entry classEntryFields : classSym.fields.entrySet()) {
@@ -132,9 +135,14 @@ public class SymbolTable {
             for (Map.Entry classEntryFunctions : classSym.methods.entrySet()) {
                 Object keyMethod = classEntryFunctions.getKey();
                 MethodSymTable methSym = classSym.methods.get(keyMethod);
-                System.out.println(classSym.className + "." + methSym.methodName + " : "+ fieldOffset);
+                System.out.println(classSym.className + "." + methSym.methodName + " : "+ methodOffset);
                 methodOffset += 8;
             }
+            // Store offsets
+            ArrayList<Integer> offsets = new ArrayList<>();
+            offsets.add(fieldOffset);
+            offsets.add(methodOffset);
+            offsetTable.put(classSym.className, offsets);
         }
     }
 

@@ -199,31 +199,6 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
     }
 
     /**
-     * f0 -> Block()
-     * | AssignmentStatement()
-     * | ArrayAssignmentStatement()
-     * | IfStatement()
-     * | WhileStatement()
-     * | PrintStatement()
-     */
-    public String visit(Statement n, SymbolTable symbolTable) throws Exception {
-        return n.f0.accept(this, symbolTable);
-    }
-
-    /**
-     * f0 -> "{"
-     * f1 -> ( Statement() )*
-     * f2 -> "}"
-     */
-    public String visit(Block n, SymbolTable symbolTable) throws Exception {
-        String _ret = null;
-        n.f0.accept(this, symbolTable);
-        n.f1.accept(this, symbolTable);
-        n.f2.accept(this, symbolTable);
-        return _ret;
-    }
-
-    /**
      * f0 -> Identifier()
      * f1 -> "="
      * f2 -> Expression()
@@ -579,27 +554,12 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
     }
 
     /**
-     * f0 -> ( ExpressionTerm() )*
-     */
-    public String visit(ExpressionTail n, SymbolTable symbolTable) throws Exception {
-        return n.f0.accept(this, symbolTable);
-    }
-
-    /**
      * f0 -> ","
      * f1 -> Expression()
      */
     public String visit(ExpressionTerm n, SymbolTable symbolTable) throws Exception {
         this.methodArgs.add(n.f1.accept(this, symbolTable));
         return null;
-    }
-
-    /**
-     * f0 -> NotExpression()
-     * | PrimaryExpression()
-     */
-    public String visit(Clause n, SymbolTable symbolTable) throws Exception {
-        return n.f0.accept(this, symbolTable);
     }
 
     /**

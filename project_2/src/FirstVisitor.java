@@ -43,6 +43,7 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
         SymbolTable.ClassSymTable curClass = symbolTable.classes.get(mainClassName);
         curClass.className = mainClassName;
         curClass.parentClassName = null;
+        curClass.mainClass = true;
         // Store main method in class symbol table
         curClass.methods.put("main", new SymbolTable.MethodSymTable());
         SymbolTable.MethodSymTable curMethod = curClass.methods.get("main");
@@ -82,6 +83,7 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
         SymbolTable.ClassSymTable curClass = symbolTable.classes.get(className);
         curClass.className = className;
         curClass.parentClassName = null;
+        curClass.mainClass = false;
         // Set up visitor's fields to be aware where to check in the symbol table
         this.currentClassName = className;
         this.classVar = true;
@@ -121,6 +123,7 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
         SymbolTable.ClassSymTable curClass = symbolTable.classes.get(childClassName);
         curClass.className = childClassName;
         curClass.parentClassName = parentClassName;
+        curClass.mainClass = false;
         // Set up visitor's fields to be aware where to check in the symbol table
         this.currentClassName = childClassName;
         this.classVar = true;

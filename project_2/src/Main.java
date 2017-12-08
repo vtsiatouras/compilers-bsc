@@ -26,6 +26,7 @@ class Main {
                     symbolTable.type_check_symbol_table();
                     // Typecheck the given program
                     root.accept(secondVisitor, symbolTable);
+                    symbolTable.calculate_offsets();
                     System.out.println("Parse Successful\n");
 //                    symbolTable = null;
                 } catch (Exception ex) {

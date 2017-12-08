@@ -92,30 +92,48 @@ public class SymbolTable {
     }
 
     void calculate_offsets() {
-//        int classOffset, functionOffset;
-        Map<String, Entry<Integer, Integer>> offsetTable = new HashMap<String, Entry<Integer,Integer>>();
+        int fieldOffset, methodOffset;
+        Map<String, Entry<Integer, Integer>> offsetTable = new HashMap<>();
         for (Map.Entry entry : classes.entrySet()) {
+            fieldOffset = 0;
+            methodOffset = 0;
             Object key = entry.getKey();
             ClassSymTable classSym = classes.get(key);
+            // Ignore main class
+            if (classSym.mainClass) {
+                continue;
+            }
             // If it is child class get parent's offset
-            if (classSym.parentClassName != null) {
-                Object curOffset = offsetTable.get(classSym.parentClassName);
-            } else {
-
-            }
-            System.out.println("\nFIELDS:");
+//            if (classSym.parentClassName != null) {
+//                Entry curOffset = offsetTable.get(classSym.parentClassName);
+//
+//            } else {
+//
+//            }
+            System.out.println("-----------Class "+ classSym.className + "-----------");
+            System.out.println("---Variables---");
             for (Map.Entry classEntryFields : classSym.fields.entrySet()) {
-                System.out.println("   " + classEntryFields.getValue() + " " + classEntryFields.getKey());
+                String type = classEntryFields.getValue().toString();
+                String var = classEntryFields.getKey().toString();
+                if(type.equals("int")){
+                    System.out.println(classSym.className + "." + var + " : "+ fieldOffset);
+                    fieldOffset += 4;
+                }
+                else if(type.equals("boolean")){
+                    System.out.println(classSym.className + "." + var + " : "+ fieldOffset);
+                    fieldOffset += 1;
+                }
+                else {
+                    System.out.println(classSym.className + "." + var + " : "+ fieldOffset);
+                    fieldOffset += 8;
+                }
             }
-            System.out.println("\nFUNCTIONS:");
+            System.out.println("---Methods---");
             for (Map.Entry classEntryFunctions : classSym.methods.entrySet()) {
                 Object keyMethod = classEntryFunctions.getKey();
                 MethodSymTable methSym = classSym.methods.get(keyMethod);
-
-                for (Map.Entry methodEntryFunctions : methSym.variables.entrySet()) {
-                    System.out.println("        " + methodEntryFunctions.getValue() + " " + methodEntryFunctions.getKey());
-                }
-                System.out.println();
+                System.out.println(classSym.className + "." + methSym.methodName + " : "+ fieldOffset);
+                methodOffset += 8;
             }
         }
     }
@@ -123,6 +141,7 @@ public class SymbolTable {
     public static class ClassSymTable {
         public String className;
         public String parentClassName;
+        public boolean mainClass;
         public LinkedHashMap<String, String> fields;
         public LinkedHashMap<String, MethodSymTable> methods;
 

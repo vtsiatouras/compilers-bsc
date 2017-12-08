@@ -14,6 +14,7 @@ class Main {
                 fis = new FileInputStream(args[i]);
                 MiniJavaParser parser = new MiniJavaParser(fis);
                 System.out.println("\nParsing '"+args[i]+"'");
+                System.out.flush();
                 SymbolTable symbolTable = new SymbolTable();
                 FirstVisitor firstVisitor = new FirstVisitor();
                 SecondVisitor secondVisitor = new SecondVisitor();

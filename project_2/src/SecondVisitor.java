@@ -78,9 +78,34 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
             // Typecheck arguments
             for (int i = 0; i < args.size(); i++) {
                 String value = (new ArrayList<String>(methodSymTable.parameters.values())).get(i);
-                if (!args.get(i).equals(value)) {
-                    throw new Exception("Expected type of '" + value + "' instead of type of '" + args.get(i) + "' at method '" + methodName + "'");
+                // Check if the types are the same
+                String argType = args.get(i).toString();
+                if (argType.equals(value)) {
+                    continue;
                 }
+                // The only case that this is allowed is when the parameter is type of subclass of the declarated parameter
+                // Do not execute the below for primitive types
+                if (!argType.equals("int") && !argType.equals("int[]") && !argType.equals("boolean")) {
+                    boolean foundType = false;
+                    SymbolTable.ClassSymTable tempSym = symbolTable.classes.get(argType);
+                    // Iterate your parents
+                    while (tempSym.parentClassName != null) {
+                        SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(tempSym.parentClassName);
+                        // If you found a parent with this type name
+                        if (parentClass.className.equals(value)) {
+                            // Return your type and class name
+                            foundType = true;
+                            break;
+                        }
+                        tempSym = parentClass;
+                    }
+                    // Continue to the next argument
+                    if (foundType) {
+                        continue;
+                    }
+                }
+                // If you are here then a parameter is wrong...
+                throw new Exception("Expected type of '" + value + "' instead of type of '" + args.get(i) + "' at method '" + methodName + "'");
             }
         }
     }
@@ -167,11 +192,18 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * f12 -> "}"
      */
     public String visit(MethodDeclaration n, SymbolTable symbolTable) throws Exception {
+//        String type = n.f1.accept(this, symbolTable);
         this.currentFunctionName = n.f2.accept(this, symbolTable);
         this.classVar = false;
         this.functionVar = true;
         // Visit Statement
         n.f8.accept(this, symbolTable);
+        String retType = n.f10.accept(this, symbolTable);
+        SymbolTable.ClassSymTable classSym = symbolTable.classes.get(this.currentClassName);
+        String methodType = classSym.methods.get(this.currentFunctionName).returnType;
+        if (!retType.equals(methodType)) {
+            throw new Exception("Invalid return type of '" + retType + "' at method '" + this.currentFunctionName + "'. Expected type of '" + methodType + "'");
+        }
         return null;
     }
 
@@ -255,8 +287,6 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         return null;
     }
 
-    //TODO
-
     /**
      * f0 -> "if"
      * f1 -> "("
@@ -267,18 +297,16 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * f6 -> Statement()
      */
     public String visit(IfStatement n, SymbolTable symbolTable) throws Exception {
-        String _ret = null;
-        n.f0.accept(this, symbolTable);
-        n.f1.accept(this, symbolTable);
-        n.f2.accept(this, symbolTable);
-        n.f3.accept(this, symbolTable);
-        n.f4.accept(this, symbolTable);
-        n.f5.accept(this, symbolTable);
-        n.f6.accept(this, symbolTable);
-        return _ret;
-    }
+        String type = n.f2.accept(this, symbolTable);
+        if (!type.equals("boolean")) {
+            throw new Exception("Expressions inside 'if' statement must be type of 'boolean'");
+        }
 
-    //TODO
+        // Visit statements
+        n.f4.accept(this, symbolTable);
+        n.f6.accept(this, symbolTable);
+        return null;
+    }
 
     /**
      * f0 -> "while"
@@ -288,13 +316,14 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * f4 -> Statement()
      */
     public String visit(WhileStatement n, SymbolTable symbolTable) throws Exception {
-        String _ret = null;
-        n.f0.accept(this, symbolTable);
-        n.f1.accept(this, symbolTable);
-        n.f2.accept(this, symbolTable);
-        n.f3.accept(this, symbolTable);
+        String type = n.f2.accept(this, symbolTable);
+        if (!type.equals("boolean")) {
+            throw new Exception("Expressions inside 'while' statement must be type of 'boolean'");
+        }
+
+        // Visit statements
         n.f4.accept(this, symbolTable);
-        return _ret;
+        return null;
     }
 
     /**
@@ -332,7 +361,6 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         return n.f0.accept(this, symbolTable);
     }
 
-    //TODO
 
     /**
      * f0 -> Clause()
@@ -340,14 +368,25 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * f2 -> Clause()
      */
     public String visit(AndExpression n, SymbolTable symbolTable) throws Exception {
-        String _ret = null;
-        n.f0.accept(this, symbolTable);
-        n.f1.accept(this, symbolTable);
-        n.f2.accept(this, symbolTable);
-        return _ret;
+        String type1 = n.f0.accept(this, symbolTable);
+        String type2 = n.f2.accept(this, symbolTable);
+        if (!type1.equals("boolean") || !type2.equals("boolean")) {
+            throw new Exception("'&&' operator works only for boolean");
+        }
+        return "boolean";
     }
 
-    //TODO
+    /**
+     * f0 -> "!"
+     * f1 -> Clause()
+     */
+    public String visit(NotExpression n, SymbolTable symbolTable) throws Exception {
+        String type = n.f1.accept(this, symbolTable);
+        if (!type.equals("boolean")) {
+            throw new Exception("'&&' operator works only for boolean");
+        }
+        return "boolean";
+    }
 
     /**
      * f0 -> PrimaryExpression()
@@ -355,11 +394,15 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * f2 -> PrimaryExpression()
      */
     public String visit(CompareExpression n, SymbolTable symbolTable) throws Exception {
-        String _ret = null;
-        n.f0.accept(this, symbolTable);
-        n.f1.accept(this, symbolTable);
-        n.f2.accept(this, symbolTable);
-        return _ret;
+        this.returnPrimaryExpr = false;
+        String type1 = n.f0.accept(this, symbolTable);
+        this.returnPrimaryExpr = false;
+        String type2 = n.f2.accept(this, symbolTable);
+        if (!type1.equals("int") || !type2.equals("int")) {
+            throw new Exception("'<' operator works only for integers");
+        }
+        this.returnPrimaryExpr = false;
+        return "boolean";
     }
 
 
@@ -376,7 +419,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         if (!type1.equals("int") || !type2.equals("int")) {
             throw new Exception("'+' operator works only for integers");
         }
-        this.returnPrimaryExpr = true;
+        this.returnPrimaryExpr = false;
         return "int";
     }
 
@@ -637,7 +680,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * f2 -> ")"
      */
     public String visit(BracketExpression n, SymbolTable symbolTable) throws Exception {
-        this.returnPrimaryExpr = true;
+        this.returnPrimaryExpr = false;
         String type = n.f1.accept(this, symbolTable);
         this.returnPrimaryExpr = true;
         return type;

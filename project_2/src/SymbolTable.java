@@ -94,17 +94,19 @@ public class SymbolTable {
 
     void calculate_offsets() {
         int fieldOffset, methodOffset;
+        String mainClassName = null;
+        // Local data structure to store offsets for each class
         HashMap<String, ArrayList<Integer>> offsetTable = new HashMap<>();
         for (Map.Entry entry : classes.entrySet()) {
-
             Object key = entry.getKey();
             ClassSymTable classSym = classes.get(key);
             // Ignore main class
             if (classSym.mainClass) {
+                mainClassName = classSym.className;
                 continue;
             }
             // If it is child class get parent's offset
-            if (classSym.parentClassName != null) {
+            if (classSym.parentClassName != null && !classSym.parentClassName.equals(mainClassName)) {
                 ArrayList<Integer> curOffset = offsetTable.get(classSym.parentClassName);
                 System.out.println(curOffset.get(0)+" "+curOffset.get(1));
                 fieldOffset = curOffset.get(0);

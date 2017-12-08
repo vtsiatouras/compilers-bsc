@@ -157,6 +157,9 @@ public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
         if (this.functionVar) {
             SymbolTable.ClassSymTable curClass = symbolTable.classes.get(this.currentClassName);
             SymbolTable.MethodSymTable curMethod = curClass.methods.get(this.currentFunctionName);
+            if (curMethod.parameters.containsKey(identifier)) {
+                throw new Exception("Variable '" + identifier + "' is already declared");
+            }
             if (curMethod.variables.containsKey(identifier)) {
                 throw new Exception("Variable '" + identifier + "' is already declared");
             }

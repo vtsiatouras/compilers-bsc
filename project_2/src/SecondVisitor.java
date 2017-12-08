@@ -187,6 +187,8 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         this.currentFunctionName = n.f2.accept(this, symbolTable);
         // Visit Statement
         n.f8.accept(this, symbolTable);
+        // Return Expression
+        this.returnPrimaryExpr = false;
         String retType = n.f10.accept(this, symbolTable);
         SymbolTable.ClassSymTable classSym = symbolTable.classes.get(this.currentClassName);
         String methodType = classSym.methods.get(this.currentFunctionName).returnType;
@@ -235,15 +237,16 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         }
         this.exprType = type;
         this.returnPrimaryExpr = false;
-        String exrpType = n.f2.accept(this, symbolTable);
+        String exrp2Type = n.f2.accept(this, symbolTable);
 
-        if (!this.exprType.equals(exrpType)) {
+        if (!this.exprType.equals(exrp2Type)) {
             // The only case that this is allowed is when the left var is type of subclass of the right var
             // Do not execute the below for primitive types
             boolean foundType = false;
-            if (!this.exprType.equals("int") && !this.exprType.equals("int[]") && !this.exprType.equals("boolean")) {
+            if (!this.exprType.equals("int") && !this.exprType.equals("int[]") && !this.exprType.equals("boolean")
+                    && !exrp2Type.equals("int") && !exrp2Type.equals("int[]") && !exrp2Type.equals("boolean")) {
 
-                SymbolTable.ClassSymTable tempSym = symbolTable.classes.get(exrpType);
+                SymbolTable.ClassSymTable tempSym = symbolTable.classes.get(exrp2Type);
                 // Iterate your parents
                 while (tempSym.parentClassName != null) {
                     SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(tempSym.parentClassName);
@@ -258,7 +261,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
                 // Continue to the next argument
             }
             if (!foundType) {
-                throw new Exception("Operations between '" + this.exprType + "' and '" + exrpType + "' are not permitted");
+                throw new Exception("Operations between '" + this.exprType + "' and '" + exrp2Type + "' are not permitted");
             }
         }
 //        this.assignmentStatement = false;

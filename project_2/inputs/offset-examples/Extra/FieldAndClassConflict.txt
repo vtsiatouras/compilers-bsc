@@ -8,9 +8,4 @@ A.B : 0
 --Variables---
 B.A : 0
 ---Methods---
-B.foo : 0
-
------------Class C-----------
---Variables---
----Methods---
 

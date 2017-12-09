@@ -193,13 +193,29 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         n.f8.accept(this, symbolTable);
         // Return Expression
         this.returnPrimaryExpr = false;
-        String retType = n.f10.accept(this, symbolTable);
         SymbolTable.ClassSymTable classSym = symbolTable.classes.get(this.currentClassName);
         String methodType = classSym.methods.get(this.currentFunctionName).returnType;
-        if (!retType.equals(methodType)) {
-            throw new Exception("Invalid return type of '" + retType + "' at method '" + this.currentFunctionName + "'. Expected type of '" + methodType + "'");
+        this.exprType = methodType;
+        String retType = n.f10.accept(this, symbolTable);
+        // If the return type equals with the method type
+        if (retType.equals(methodType)) {
+            return null;
         }
-        return null;
+        // Check if it has parent with that type
+        boolean typeFound = false;
+        SymbolTable.ClassSymTable curClass = symbolTable.classes.get(this.currentClassName);
+        // Check if it has parent with that type
+        while (curClass.parentClassName != null) {
+            if (methodType.equals(curClass.parentClassName)) {
+                typeFound = true;
+                break;
+            }
+            curClass = symbolTable.classes.get(curClass.parentClassName);
+        }
+        if(typeFound) {
+            return null;
+        }
+        throw new Exception("Invalid return type of '" + retType + "' at method '" + this.currentFunctionName + "'. Expected type of '" + methodType + "'");
     }
 
     /**

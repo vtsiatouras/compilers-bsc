@@ -9,7 +9,6 @@ class Main {
             System.exit(1);
         }
         FileInputStream fis = null;
-//        for (int i = 0; i < args.length; i++) {
         for (String inputFile : args) {
             try {
                 fis = new FileInputStream(inputFile);

@@ -90,7 +90,6 @@ public class SymbolTable {
         }
     }
 
-    // TODO check for overrides!
     void calculate_offsets(String fileName) {
         // Create "out" directory to store generated Main.java
         File dir = new File("v-tables");
@@ -100,11 +99,11 @@ public class SymbolTable {
         }
         try {
             // Create file to store the V-Table
-            File file = new File("v-tables/"+fileName);
+            File file = new File("v-tables/" + fileName + ".txt");
             if (!file.exists()) {
                 file.createNewFile();
             }
-            FileWriter fw = new FileWriter(file, true);
+            FileWriter fw = new FileWriter(file, false);
             BufferedWriter bw = new BufferedWriter(fw);
             PrintWriter pw = new PrintWriter(bw);
 
@@ -149,9 +148,14 @@ public class SymbolTable {
                 for (Map.Entry classEntryFunctions : classSym.methods.entrySet()) {
                     Object keyMethod = classEntryFunctions.getKey();
                     MethodSymTable methSym = classSym.methods.get(keyMethod);
+                    // Ignore overriding methods
+                    if (methSym.override) {
+                        continue;
+                    }
                     pw.println(classSym.className + "." + methSym.methodName + " : " + methodOffset);
                     methodOffset += 8;
                 }
+                pw.println();
                 // Store offsets
                 ArrayList<Integer> offsets = new ArrayList<>();
                 offsets.add(fieldOffset);

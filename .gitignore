@@ -27,6 +27,8 @@ part_1.iml
 project_2.iml
 *out/
 
+*v-tables/
+
 # DO NOT IGNORE THE BELOW #
 !*java-cup-11b.jar
 !*java-cup-11b-runtime.jar

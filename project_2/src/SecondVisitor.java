@@ -7,12 +7,15 @@ import java.util.ArrayList;
 
 public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
 
+    // Fields to help the running visitor
+    // to define where to look at the symbol table
     private String currentClassName;
     private String currentFunctionName;
     private String exprType;
     private Boolean returnPrimaryExpr;
     private ArrayList<String> methodArgs;
 
+    // This method lookups field and var names within a class which is visited this time of execution
     private String look_up_identifier(String identifier, SymbolTable symbolTable) {
         // Lookup if this identifier is declared before
         SymbolTable.ClassSymTable curClass = symbolTable.classes.get(this.currentClassName);
@@ -41,6 +44,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         return null;
     }
 
+    // This method look up for methods given a 'methodName' and returns the type and the class that belongs
     private String[] look_up_methods(String methodName, String className, SymbolTable symbolTable) {
         SymbolTable.ClassSymTable classSym = symbolTable.classes.get(className);
         if (classSym.methods.containsKey(methodName)) {
@@ -60,6 +64,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         return null;
     }
 
+    // This method compares the parameters of a method with a list of types that the visitors extracted
     private void check_args_method(String methodName, String className, ArrayList args, SymbolTable symbolTable) throws Exception {
         SymbolTable.ClassSymTable classSym = symbolTable.classes.get(className);
         SymbolTable.MethodSymTable methodSymTable = classSym.methods.get(methodName);
@@ -331,22 +336,6 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         this.exprType = null;
         return null;
     }
-
-    /**
-     * f0 -> AndExpression()
-     * | CompareExpression()
-     * | PlusExpression()
-     * | MinusExpression()
-     * | TimesExpression()
-     * | ArrayLookup()
-     * | ArrayLength()
-     * | MessageSend()
-     * | Clause()
-     */
-    public String visit(Expression n, SymbolTable symbolTable) throws Exception {
-        return n.f0.accept(this, symbolTable);
-    }
-
 
     /**
      * f0 -> Clause()
@@ -692,5 +681,4 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
     public String visit(ThisExpression n, SymbolTable symbolTable) throws Exception {
         return "this";
     }
-
 }

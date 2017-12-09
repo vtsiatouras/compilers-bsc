@@ -7,6 +7,8 @@ import java.util.Iterator;
 
 public class FirstVisitor extends GJDepthFirst<String, SymbolTable> {
 
+    // Fields to help the running visitor to define where to
+    // store the information inside the symbol table
     private String currentClassName;
     private String currentFunctionName;
     private Boolean classVar;

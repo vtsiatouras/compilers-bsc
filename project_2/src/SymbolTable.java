@@ -12,6 +12,8 @@ public class SymbolTable {
         classes = new LinkedHashMap<>();
     }
 
+    // This method prints the symbol table
+    // Used for the debugging
     void print_symbol_table() {
         for (Map.Entry entry : classes.entrySet()) {
             Object key = entry.getKey();

@@ -35,6 +35,7 @@ class Main {
                     fileName = fileName.substring(0, fileName.length() - 5);
                     // Calculate offsets
                     symbolTable.calculate_offsets(fileName);
+                    System.err.println("Generated V-Table with name '" + fileName + ".txt' at directory 'v-tables'");
                 } catch (Exception ex) {
                     System.err.println(ex.getMessage());
                 }

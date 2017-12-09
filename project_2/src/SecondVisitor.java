@@ -240,7 +240,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
                 // Continue to the next argument
             }
             if (!foundType) {
-                throw new Exception("Operations between '" + this.exprType + "' and '" + expr2Type + "' are not permitted");
+                throw new Exception("Operations between '" + this.exprType + "' and '" + expr2Type + "' are not allowed");
             }
         }
         this.exprType = null;

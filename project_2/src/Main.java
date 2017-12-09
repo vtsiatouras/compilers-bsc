@@ -24,12 +24,18 @@ class Main {
                     // Store all the critical information (i.e. class names, fields, methods, params, variables)
                     // in the symbol table.
                     root.accept(firstVisitor, symbolTable);
-//                    symbolTable.print_symbol_table();
                     symbolTable.type_check_symbol_table();
                     // Typecheck the given program
                     root.accept(secondVisitor, symbolTable);
                     System.err.println("Parse Successful");
-//                    symbolTable.calculate_offsets();
+                    // Preparations to calculate V-Table
+                    // Get file name without absolute path
+                    File f = new File(inputFile);
+                    String fileName = f.getName();
+                    // Crop .java
+                    fileName = fileName.substring(0, fileName.length() - 5);
+                    // Calculate offsets
+                    symbolTable.calculate_offsets(fileName);
                 } catch (Exception ex) {
                     System.err.println(ex.getMessage());
                 }

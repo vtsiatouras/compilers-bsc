@@ -1,3 +1,4 @@
+import java.io.*;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.HashMap;
@@ -89,65 +90,84 @@ public class SymbolTable {
         }
     }
 
-    void calculate_offsets() {
-        int fieldOffset, methodOffset;
-        String mainClassName = null;
-        // Local data structure to store offsets for each class
-        HashMap<String, ArrayList<Integer>> offsetTable = new HashMap<>();
-        for (Map.Entry entry : classes.entrySet()) {
-            Object key = entry.getKey();
-            ClassSymTable classSym = classes.get(key);
-            // Ignore main class
-            if (classSym.mainClass) {
-                mainClassName = classSym.className;
-                continue;
+    // TODO check for overrides!
+    void calculate_offsets(String fileName) {
+        // Create "out" directory to store generated Main.java
+        File dir = new File("v-tables");
+        // If the directory does not exist, create it
+        if (!dir.exists()) {
+            dir.mkdir();
+        }
+        try {
+            // Create file to store the V-Table
+            File file = new File("v-tables/"+fileName);
+            if (!file.exists()) {
+                file.createNewFile();
             }
-            // If it is child class get parent's offset
-            if (classSym.parentClassName != null && !classSym.parentClassName.equals(mainClassName)) {
-                ArrayList<Integer> curOffset = offsetTable.get(classSym.parentClassName);
-                fieldOffset = curOffset.get(0);
-                methodOffset = curOffset.get(1);
-            } else {
-                fieldOffset = 0;
-                methodOffset = 0;
-            }
-            System.out.println("-----------Class "+ classSym.className + "-----------");
-            System.out.println("---Variables---");
-            for (Map.Entry classEntryFields : classSym.fields.entrySet()) {
-                String type = classEntryFields.getValue().toString();
-                String var = classEntryFields.getKey().toString();
-                if(type.equals("int")){
-                    System.out.println(classSym.className + "." + var + " : "+ fieldOffset);
-                    fieldOffset += 4;
+            FileWriter fw = new FileWriter(file, true);
+            BufferedWriter bw = new BufferedWriter(fw);
+            PrintWriter pw = new PrintWriter(bw);
+
+            int fieldOffset, methodOffset;
+            String mainClassName = null;
+            // Local data structure to store offsets for each class
+            HashMap<String, ArrayList<Integer>> offsetTable = new HashMap<>();
+            for (Map.Entry entry : classes.entrySet()) {
+                Object key = entry.getKey();
+                ClassSymTable classSym = classes.get(key);
+                // Ignore main class
+                if (classSym.mainClass) {
+                    mainClassName = classSym.className;
+                    continue;
                 }
-                else if(type.equals("boolean")){
-                    System.out.println(classSym.className + "." + var + " : "+ fieldOffset);
-                    fieldOffset += 1;
+                // If it is child class get parent's offset
+                if (classSym.parentClassName != null && !classSym.parentClassName.equals(mainClassName)) {
+                    ArrayList<Integer> curOffset = offsetTable.get(classSym.parentClassName);
+                    fieldOffset = curOffset.get(0);
+                    methodOffset = curOffset.get(1);
+                } else {
+                    fieldOffset = 0;
+                    methodOffset = 0;
                 }
-                else {
-                    System.out.println(classSym.className + "." + var + " : "+ fieldOffset);
-                    fieldOffset += 8;
+                pw.println("-----------Class " + classSym.className + "-----------");
+                pw.println("---Variables---");
+                for (Map.Entry classEntryFields : classSym.fields.entrySet()) {
+                    String type = classEntryFields.getValue().toString();
+                    String var = classEntryFields.getKey().toString();
+                    if (type.equals("int")) {
+                        pw.println(classSym.className + "." + var + " : " + fieldOffset);
+                        fieldOffset += 4;
+                    } else if (type.equals("boolean")) {
+                        pw.println(classSym.className + "." + var + " : " + fieldOffset);
+                        fieldOffset += 1;
+                    } else {
+                        pw.println(classSym.className + "." + var + " : " + fieldOffset);
+                        fieldOffset += 8;
+                    }
                 }
+                pw.println("---Methods---");
+                for (Map.Entry classEntryFunctions : classSym.methods.entrySet()) {
+                    Object keyMethod = classEntryFunctions.getKey();
+                    MethodSymTable methSym = classSym.methods.get(keyMethod);
+                    pw.println(classSym.className + "." + methSym.methodName + " : " + methodOffset);
+                    methodOffset += 8;
+                }
+                // Store offsets
+                ArrayList<Integer> offsets = new ArrayList<>();
+                offsets.add(fieldOffset);
+                offsets.add(methodOffset);
+                offsetTable.put(classSym.className, offsets);
             }
-            System.out.println("---Methods---");
-            for (Map.Entry classEntryFunctions : classSym.methods.entrySet()) {
-                Object keyMethod = classEntryFunctions.getKey();
-                MethodSymTable methSym = classSym.methods.get(keyMethod);
-                System.out.println(classSym.className + "." + methSym.methodName + " : "+ methodOffset);
-                methodOffset += 8;
-            }
-            // Store offsets
-            ArrayList<Integer> offsets = new ArrayList<>();
-            offsets.add(fieldOffset);
-            offsets.add(methodOffset);
-            offsetTable.put(classSym.className, offsets);
+            pw.close();
+        } catch (Exception ex) {
+            System.err.println(ex.getMessage());
         }
     }
 
     public static class ClassSymTable {
         public String className;
         public String parentClassName;
-        public boolean mainClass;
+        public Boolean mainClass;
         public LinkedHashMap<String, String> fields;
         public LinkedHashMap<String, MethodSymTable> methods;
 

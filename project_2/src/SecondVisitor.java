@@ -13,7 +13,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
     private Boolean returnPrimaryExpr;
     private ArrayList<String> methodArgs;
 
-    public String look_up_identifier(String identifier, SymbolTable symbolTable) {
+    private String look_up_identifier(String identifier, SymbolTable symbolTable) {
         // Lookup if this identifier is declared before
         SymbolTable.ClassSymTable curClass = symbolTable.classes.get(this.currentClassName);
         SymbolTable.MethodSymTable curMethod = curClass.methods.get(this.currentFunctionName);
@@ -41,7 +41,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         return null;
     }
 
-    public String[] look_up_methods(String methodName, String className, SymbolTable symbolTable) {
+    private String[] look_up_methods(String methodName, String className, SymbolTable symbolTable) {
         SymbolTable.ClassSymTable classSym = symbolTable.classes.get(className);
         if (classSym.methods.containsKey(methodName)) {
             // Return your type and class name
@@ -60,7 +60,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         return null;
     }
 
-    public void check_args_method(String methodName, String className, ArrayList args, SymbolTable symbolTable) throws Exception {
+    private void check_args_method(String methodName, String className, ArrayList args, SymbolTable symbolTable) throws Exception {
         SymbolTable.ClassSymTable classSym = symbolTable.classes.get(className);
         SymbolTable.MethodSymTable methodSymTable = classSym.methods.get(methodName);
         // If the args array is empty
@@ -72,15 +72,15 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
             if (methodSymTable.parameters.size() != args.size()) {
                 throw new Exception("The number of the given arguments is not matching with the definition of the method '" + methodName + "'");
             }
-            // Typecheck arguments
+            // Type check arguments
             for (int i = 0; i < args.size(); i++) {
-                String value = (new ArrayList<String>(methodSymTable.parameters.values())).get(i);
+                String value = (new ArrayList<>(methodSymTable.parameters.values())).get(i);
                 // Check if the types are the same
                 String argType = args.get(i).toString();
                 if (argType.equals(value)) {
                     continue;
                 }
-                // The only case that this is allowed is when the parameter is type of subclass of the declarated parameter
+                // The only case that this is allowed is when the parameter is type of subclass of the declared parameter
                 // Do not execute the below for primitive types
                 if (!argType.equals("int") && !argType.equals("int[]") && !argType.equals("boolean")) {
                     boolean foundType = false;
@@ -183,7 +183,6 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
      * f12 -> "}"
      */
     public String visit(MethodDeclaration n, SymbolTable symbolTable) throws Exception {
-//        String type = n.f1.accept(this, symbolTable);
         this.currentFunctionName = n.f2.accept(this, symbolTable);
         // Visit Statement
         n.f8.accept(this, symbolTable);
@@ -212,16 +211,16 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         }
         this.exprType = type;
         this.returnPrimaryExpr = false;
-        String exrp2Type = n.f2.accept(this, symbolTable);
+        String expr2Type = n.f2.accept(this, symbolTable);
 
-        if (!this.exprType.equals(exrp2Type)) {
+        if (!this.exprType.equals(expr2Type)) {
             // The only case that this is allowed is when the left var is type of subclass of the right var
             // Do not execute the below for primitive types
             boolean foundType = false;
             if (!this.exprType.equals("int") && !this.exprType.equals("int[]") && !this.exprType.equals("boolean")
-                    && !exrp2Type.equals("int") && !exrp2Type.equals("int[]") && !exrp2Type.equals("boolean")) {
+                    && !expr2Type.equals("int") && !expr2Type.equals("int[]") && !expr2Type.equals("boolean")) {
 
-                SymbolTable.ClassSymTable tempSym = symbolTable.classes.get(exrp2Type);
+                SymbolTable.ClassSymTable tempSym = symbolTable.classes.get(expr2Type);
                 // Iterate your parents
                 while (tempSym.parentClassName != null) {
                     SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(tempSym.parentClassName);
@@ -236,10 +235,9 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
                 // Continue to the next argument
             }
             if (!foundType) {
-                throw new Exception("Operations between '" + this.exprType + "' and '" + exrp2Type + "' are not permitted");
+                throw new Exception("Operations between '" + this.exprType + "' and '" + expr2Type + "' are not permitted");
             }
         }
-//        this.assignmentStatement = false;
         this.exprType = null;
         return null;
     }
@@ -517,14 +515,14 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
 
         // Create an array to hold up the types of parameters
         // If it is already created then it is assumed where are in nested call
-        // Hold the data of the current array and create a new one to typecheck the nested call
+        // Hold the data of the current array and create a new one to type check the nested call
         ArrayList<String> backupMethodArgs = null;
         boolean methodArgsTempFlag = false;
         if (this.methodArgs != null) {
             methodArgsTempFlag = true;
             backupMethodArgs = new ArrayList<>(this.methodArgs);
         }
-        this.methodArgs = new ArrayList<String>();
+        this.methodArgs = new ArrayList<>();
 
         // Visit ExpressionList
         n.f4.accept(this, symbolTable);
@@ -577,6 +575,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         if (expression == null) {
             return null;
         }
+        // This return is used for complicated expressions such as nested message send etc.
         if (this.returnPrimaryExpr) {
             this.returnPrimaryExpr = false;
             return expression;
@@ -630,7 +629,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
         String identifier = n.f1.accept(this, symbolTable);
         // Return if the type is correct
         if (!symbolTable.classes.containsKey(identifier)) {
-            throw new Exception("Unkown symbol '" + identifier + "'");
+            throw new Exception("Unknown symbol '" + identifier + "'");
         }
         SymbolTable.ClassSymTable curClass = symbolTable.classes.get(identifier);
         String type = curClass.className;

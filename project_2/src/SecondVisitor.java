@@ -256,7 +256,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
                 // Continue to the next argument
             }
             if (!foundType) {
-                throw new Exception("Operations between '" + this.exprType + "' and '" + expr2Type + "' are not allowed");
+                throw new Exception("Assignments between '" + this.exprType + "' and '" + expr2Type + "' are not allowed");
             }
         }
         this.exprType = null;
@@ -374,7 +374,7 @@ public class SecondVisitor extends GJDepthFirst<String, SymbolTable> {
     public String visit(NotExpression n, SymbolTable symbolTable) throws Exception {
         String type = n.f1.accept(this, symbolTable);
         if (!type.equals("boolean")) {
-            throw new Exception("'&&' operator works only for boolean");
+            throw new Exception("'!' operator works only for boolean");
         }
         return "boolean";
     }

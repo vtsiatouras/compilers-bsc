@@ -23,8 +23,8 @@ class Main {
                     // Store all the critical information (i.e. class names, fields, methods, params, variables)
                     // in the symbol table.
                     root.accept(firstVisitor, symbolTable);
+                    // Type check the given program
                     symbolTable.type_check_symbol_table();
-                    // Typecheck the given program
                     root.accept(secondVisitor, symbolTable);
                     System.err.println("Parse Successful");
                     // Preparations to calculate V-Table

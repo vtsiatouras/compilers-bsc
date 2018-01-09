@@ -1,7 +1,3 @@
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -16,6 +12,7 @@ public class VTables {
     }
 
     public static class ClassVTable {
+        boolean isMainClass;
         public LinkedHashMap<String, Integer> fieldsTable;
         public LinkedHashMap<String, Integer> methodsTable;
 
@@ -35,13 +32,16 @@ public class VTables {
         for (Map.Entry entry : symbolTable.classes.entrySet()) {
             Object key = entry.getKey();
             SymbolTable.ClassSymTable classSym = symbolTable.classes.get(key);
-            // Ignore main class
-            if (classSym.mainClass) {
-                mainClassName = classSym.className;
-                continue;
-            }
             vTables.classesTables.put(classSym.className, new VTables.ClassVTable());
             VTables.ClassVTable classVTable = vTables.classesTables.get(classSym.className);
+            // Ignore main class
+            if (classSym.mainClass) {
+                classVTable.isMainClass = true;
+                mainClassName = classSym.className;
+                continue;
+            } else {
+                classVTable.isMainClass = false;
+            }
             // If it is child class get parent's offset
             if (classSym.parentClassName != null && !classSym.parentClassName.equals(mainClassName)) {
                 ArrayList<Integer> curOffset = offsetTable.get(classSym.parentClassName);
@@ -90,20 +90,20 @@ public class VTables {
             Object key = entry.getKey();
             String className = entry.getKey().toString();
             ClassVTable classVTable = classesTables.get(key);
-            System.out.println("=====Class " + className + "=====");
-            System.out.println("---Fields---");
+            System.err.println("=====Class " + className + "=====");
+            System.err.println("---Fields---");
             for (Map.Entry classVTableEntryFields : classVTable.fieldsTable.entrySet()) {
                 String fieldName = classVTableEntryFields.getKey().toString();
                 Integer offset = Integer.parseInt(classVTableEntryFields.getValue().toString());
-                System.out.println(fieldName + " " + offset);
+                System.err.println(fieldName + " " + offset);
             }
-            System.out.println("---Methods---");
+            System.err.println("---Methods---");
             for (Map.Entry classVTableEntryMethods : classVTable.methodsTable.entrySet()) {
                 String methodName = classVTableEntryMethods.getKey().toString();
                 Integer offset = Integer.parseInt(classVTableEntryMethods.getValue().toString());
-                System.out.println(methodName + " " + offset);
+                System.err.println(methodName + " " + offset);
             }
-            System.out.println();
+            System.err.println();
         }
     }
 }

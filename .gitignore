@@ -27,6 +27,7 @@ part_1.iml
 project_2.iml
 project_3.iml
 *out/
+*LLVM/
 
 *v-tables/
 

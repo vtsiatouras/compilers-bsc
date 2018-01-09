@@ -17,16 +17,16 @@ class Main {
                 System.out.flush();
                 SymbolTable symbolTable = new SymbolTable();
                 VTables vTables = new VTables();
-                TypeCheckFirstVisitor firstVisitor = new TypeCheckFirstVisitor();
-                TypeCheckSecondVisitor secondVisitor = new TypeCheckSecondVisitor();
+                TypeCheckFirstVisitor typeCheckFirstVisitor = new TypeCheckFirstVisitor();
+                TypeCheckSecondVisitor typeCheckSecondVisitor = new TypeCheckSecondVisitor();
                 Goal root = parser.Goal();
                 try {
                     // Store all the critical information (i.e. class names, fields, methods, params, variables)
                     // in the symbol table.
-                    root.accept(firstVisitor, symbolTable);
+                    root.accept(typeCheckFirstVisitor, symbolTable);
                     // Type check the given program
                     symbolTable.type_check_symbol_table();
-                    root.accept(secondVisitor, symbolTable);
+                    root.accept(typeCheckSecondVisitor, symbolTable);
                     System.err.println("Parse Successful");
                     // Preparations to calculate V-Table
                     // Get file name without absolute path
@@ -35,10 +35,10 @@ class Main {
                     // Crop .java
                     fileName = fileName.substring(0, fileName.length() - 5);
                     // Calculate offsets
-                    symbolTable.calculate_offsets(fileName);
                     vTables = vTables.create_v_tables(symbolTable);
-                    vTables.print_v_tables();
-                    System.err.println("Generated V-Table with name '" + fileName + ".txt' at directory 'v-tables'");
+//                    vTables.print_v_tables();
+                    LLVMGenerateVisitor llvmVisitor = new LLVMGenerateVisitor(fileName/*, vTables*/);
+                    root.accept(llvmVisitor, vTables);
                 } catch (Exception ex) {
                     System.err.println(ex.getMessage());
                 }

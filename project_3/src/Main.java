@@ -16,6 +16,7 @@ class Main {
                 System.err.println("\nParsing '" + inputFile + "'");
                 System.out.flush();
                 SymbolTable symbolTable = new SymbolTable();
+                VTables vTables = new VTables();
                 TypeCheckFirstVisitor firstVisitor = new TypeCheckFirstVisitor();
                 TypeCheckSecondVisitor secondVisitor = new TypeCheckSecondVisitor();
                 Goal root = parser.Goal();
@@ -35,6 +36,8 @@ class Main {
                     fileName = fileName.substring(0, fileName.length() - 5);
                     // Calculate offsets
                     symbolTable.calculate_offsets(fileName);
+                    vTables = vTables.create_v_tables(symbolTable);
+                    vTables.print_v_tables();
                     System.err.println("Generated V-Table with name '" + fileName + ".txt' at directory 'v-tables'");
                 } catch (Exception ex) {
                     System.err.println(ex.getMessage());

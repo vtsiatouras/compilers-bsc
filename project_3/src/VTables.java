@@ -70,6 +70,7 @@ public class VTables {
                 SymbolTable.MethodSymTable methSym = classSym.methods.get(keyMethod);
                 // Ignore overriding methods
                 if (methSym.override) {
+                    classVTable.methodsTable.put(methSym.methodName, methodOffset);
                     continue;
                 }
                 classVTable.methodsTable.put(methSym.methodName, methodOffset);

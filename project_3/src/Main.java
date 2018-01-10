@@ -36,9 +36,9 @@ class Main {
                     fileName = fileName.substring(0, fileName.length() - 5);
                     // Calculate offsets
                     vTables = vTables.create_v_tables(symbolTable);
-//                    vTables.print_v_tables();
-                    LLVMGenerateVisitor llvmVisitor = new LLVMGenerateVisitor(fileName/*, vTables*/);
-                    root.accept(llvmVisitor, vTables);
+                    // Create visitor for code generation, and call it.
+                    LLVMGenerateVisitor llvmVisitor = new LLVMGenerateVisitor(fileName, vTables, symbolTable);
+                    root.accept(llvmVisitor);
                 } catch (Exception ex) {
                     System.err.println(ex.getMessage());
                 }

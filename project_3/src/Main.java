@@ -38,7 +38,7 @@ class Main {
                     vTables = vTables.create_v_tables(symbolTable);
                     // Create visitor for code generation, and call it.
                     LLVMGenerateVisitor llvmVisitor = new LLVMGenerateVisitor(fileName, vTables, symbolTable);
-                    root.accept(llvmVisitor);
+                    root.accept(llvmVisitor, null);
                 } catch (Exception ex) {
                     System.err.println(ex.getMessage());
                 }

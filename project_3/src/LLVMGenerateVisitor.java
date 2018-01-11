@@ -8,15 +8,15 @@ import java.util.Map;
 @SuppressWarnings("Duplicates") // Remove IntelliJ warning about duplicate code
 
 public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
-    public VTables vTables;
-    public SymbolTable symbolTable;
-    public String fileName;
-    public File fileptr;
-    public int register;
-    public int loopLabel;
-    public int ifLabel;
-    public String currentClass;
-    public String currentMethod;
+    private VTables vTables;
+    private SymbolTable symbolTable;
+    private String fileName;
+    private File fileptr;
+    private int register;
+    private int loopLabel;
+    private int ifLabel;
+    private String currentClass;
+    private String currentMethod;
 
     LLVMGenerateVisitor(String fileName, VTables vTables, SymbolTable symbolTable) {
         this.vTables = vTables;
@@ -73,6 +73,51 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         int retVal = this.ifLabel;
         this.ifLabel++;
         return "if" + retVal;
+    }
+
+    // This method lookups field and var names within a class which is visited this time of execution
+    private String[] look_up_identifier(String identifier, SymbolTable symbolTable) throws Exception {
+        // Lookup if this identifier is declared before
+        SymbolTable.ClassSymTable curClass = symbolTable.classes.get(this.currentClass);
+        SymbolTable.MethodSymTable curMethod = curClass.methods.get(this.currentMethod);
+        // If you find it one of the below cases, return its type and the place you found it
+        // Check if this identifier is a parameter or a variable
+        if (curMethod.parameters.containsKey(identifier)) {
+            return new String[]{curMethod.parameters.get(identifier), "parameter", curMethod.methodName};
+        }
+        if (curMethod.variables.containsKey(identifier)) {
+            return new String[]{curMethod.variables.get(identifier), "variable", curMethod.methodName};
+        }
+        // Check if it is field in the class
+        if (curClass.fields.containsKey(identifier)) {
+            return new String[]{curClass.fields.get(identifier), "field", curClass.className};
+        }
+        // Check if it has parent class with this field
+        while (curClass.parentClassName != null) {
+            SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(curClass.parentClassName);
+            if (parentClass.fields.containsKey(identifier)) {
+                return new String[]{parentClass.fields.get(identifier), "field", parentClass.className};
+            }
+            curClass = parentClass;
+        }
+        // If you are here then this identifier was not found...
+        throw new Exception("Identifier not found!");
+    }
+
+    private int get_offset(String identifier, String type, VTables vTables) throws Exception{
+        VTables.ClassVTable classVTable = vTables.classesTables.get(this.currentClass);
+        // Check if it is field
+        if (classVTable.fieldsTable.containsKey(identifier)) {
+            int offset = Integer.parseInt(classVTable.fieldsTable.get(identifier).toString());
+            offset += 8;
+            System.err.println(offset);
+            return offset;
+        } else if (classVTable.methodsTable.containsKey(identifier)) {
+            int offset =  Integer.parseInt(classVTable.methodsTable.get(identifier).toString());
+            offset += 8;
+            return offset;
+        }
+        throw new Exception("Identifier not found!");
     }
 
     void llvm_create_v_tables() {
@@ -189,10 +234,14 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f16 -> "}"
      * f17 -> "}"
      */
-    public String visit(MainClass n) throws Exception {
+    public String visit(MainClass n, String str) throws Exception {
         emit("\ndefine i32 @main() {\n");
+
         emit("\n");
         emit("}\n");
+        this.ifLabel = 0;
+        this.loopLabel = 0;
+        this.register = 0;
         return null;
     }
 
@@ -206,7 +255,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      */
     public String visit(ClassDeclaration n, String str) throws Exception {
         this.currentClass = n.f1.accept(this, null);
-        n.f3.accept(this, null);
+//        n.f3.accept(this, null);
         n.f4.accept(this, null);
         return null;
     }
@@ -219,7 +268,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
     public String visit(VarDeclaration n, String str) throws Exception {
         String type = n.f0.accept(this, null);
         String identifier = n.f1.accept(this, null);
-        String buffer = "\t%"+identifier + " = alloca ";
+        String buffer = "\t%" + identifier + " = alloca ";
         if (type.equals("int")) {
             buffer += "i32\n";
         } else if (type.equals("boolean")) {
@@ -303,6 +352,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         }
 
         n.f7.accept(this, null);
+        n.f8.accept(this, null);
 
         // Return
         String retExpr = n.f10.accept(this, null);
@@ -310,6 +360,9 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         buffer = "\t" + retRegister + " = " + retExpr + '\n';
         buffer += "\tret " + llvmMethType + " " + retRegister + "\n}\n";
         emit(buffer);
+        this.ifLabel = 0;
+        this.loopLabel = 0;
+        this.register = 0;
         return null;
     }
 
@@ -320,7 +373,51 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f3 -> ";"
      */
     public String visit(AssignmentStatement n, String str) throws Exception {
+//        store i32 1, i32* %num_aux
+        String buffer;
+        String identifier = n.f0.accept(this, null);
 
+        String results[] = look_up_identifier(identifier, this.symbolTable);
+        String expr = n.f2.accept(this, null);
+//        System.err.println(expr);
+        String llvmType;
+        String reg1 = get_register();
+        String reg2 = get_register();
+        if (results[1].equals("parameter")) {
+//            String reg1 = get_register();
+//            String reg2 = get_register();
+//            buffer = "\t" + reg1 + "= load ";
+//            if (results[2].equals("int")) {
+//                buffer += "i32, i32*";
+//
+//            } else if (results[2].equals("boolean")) {
+//                buffer += "i1, i1*";
+//            } else {
+//                buffer += "i8*, i8**";
+//            }
+//            emit(buffer);
+            llvmType ="asdf";
+        }
+//        getelementptr i8, i8* %this, i32 16
+//        else if (results[1].equals("field")) {
+        else{
+
+            buffer = "\t" + reg1 + " getelementptr i8, i8* %this, i32 " + get_offset(identifier, results[0],vTables) + "\n";
+            buffer += "\t" + reg2 + " bitcast i8* %_1 to ";
+            if (results[0].equals("int")) {
+                buffer += "i32*\n";
+                llvmType = "i32*";
+            } else if (results[2].equals("boolean")) {
+                buffer += "i1*\n";
+                llvmType = "i1*";
+            } else {
+                buffer += "i8**\n";
+                llvmType = "i8**";
+            }
+            emit(buffer);
+        }
+        buffer = "\tstore "+ llvmType.substring(0, llvmType.length() - 1) + " " + expr + ", " + llvmType + " " + reg2 + "\n";
+        emit(buffer);
         return null;
     }
 
@@ -334,7 +431,8 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f6 -> Statement()
      */
     public String visit(IfStatement n, String str) throws Exception {
-
+        n.f4.accept(this, null);
+        n.f6.accept(this, null);
         return null;
     }
 
@@ -485,8 +583,40 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * | BracketExpression()
      */
     public String visit(PrimaryExpression n, String str) throws Exception {
+        String expression = n.f0.accept(this, str);
+        if(expression.matches("-?\\d+")){
+            return expression;
+        }
+        else if (expression.equals("true") || expression.equals("false")) {
+            return "boolean";
+        } else if (expression.equals("this")) {
+            return "this";
+        } else {
+            String results[] = look_up_identifier(expression, this.symbolTable);
+            String buffer;
+            if (results[1].equals("parameter")) {
+                String reg1 = get_register();
+                buffer = "\t" + reg1 + "= load ";
+                if (results[2].equals("int")) {
+                    buffer += "i32, i32*";
 
-        return null;
+                } else if (results[2].equals("boolean")) {
+                    buffer += "i1, i1*";
+                } else {
+                    buffer += "i8*, i8**";
+                }
+                emit(buffer);
+                return reg1;
+            } else if (results[1].equals("field")) {
+                return expression;
+            } else {
+                return expression;
+            }
+
+
+//            this.returnPrimaryExpr = false;
+//            return null;
+        }
     }
 
     /**

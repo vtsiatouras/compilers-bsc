@@ -372,6 +372,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             emit(buffer);
         }
 
+        // Visit var declarations & statements
         n.f7.accept(this, null);
         n.f8.accept(this, null);
 
@@ -379,7 +380,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
 //        emit("\n");
         String retExpr = n.f10.accept(this, null);
         String retRegister = get_register();
-        buffer = "\t" + retRegister + " = load "+ llvmMethType + ", "+ llvmMethType +"* " + retExpr + '\n';
+        buffer = "\t" + retRegister + " = load " + llvmMethType + ", " + llvmMethType + "* " + retExpr + '\n';
         buffer += "\tret " + llvmMethType + " " + retRegister + "\n}\n";
         emit(buffer);
         this.ifLabel = 0;
@@ -435,10 +436,10 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             } else {
                 llvmType = "i8**";
             }
-            targetRegister = "%" + identifier;
+            targetRegister = "%." + identifier;
         }
 
-        buffer = "\n\tstore " + llvmType.substring(0, llvmType.length() - 1) + " " + expr + ", " + llvmType + " " + targetRegister + "\n";
+        buffer = "\tstore " + llvmType.substring(0, llvmType.length() - 1) + " " + targetRegister + ", " + llvmType + " " + expr + "\n";
         emit(buffer);
         return null;
     }
@@ -478,7 +479,8 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f4 -> ";"
      */
     public String visit(PrintStatement n, String str) throws Exception {
-        n.f2.accept(this, null);
+        String register = n.f2.accept(this, null);
+        emit("\tcall void (i32) @print_int(i32 " + register + ")\n");
         return null;
     }
 
@@ -518,8 +520,11 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f2 -> PrimaryExpression()
      */
     public String visit(PlusExpression n, String str) throws Exception {
-
-        return "int";
+        String reg1 = n.f0.accept(this, null);
+        String reg2 = n.f2.accept(this, null);
+        String resultReg = get_register();
+        emit("\t" + resultReg + " = add i32 " + reg1 + ", " + reg2 + "\n");
+        return resultReg;
     }
 
     /**
@@ -528,8 +533,11 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f2 -> PrimaryExpression()
      */
     public String visit(MinusExpression n, String str) throws Exception {
-
-        return "int";
+        String reg1 = n.f0.accept(this, null);
+        String reg2 = n.f2.accept(this, null);
+        String resultReg = get_register();
+        emit("\t" + resultReg + " = sub i32 " + reg1 + ", " + reg2 + "\n");
+        return resultReg;
     }
 
     /**
@@ -538,8 +546,11 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f2 -> PrimaryExpression()
      */
     public String visit(TimesExpression n, String str) throws Exception {
-
-        return "int";
+        String reg1 = n.f0.accept(this, null);
+        String reg2 = n.f2.accept(this, null);
+        String resultReg = get_register();
+        emit("\t" + resultReg + " = mul i32 " + reg1 + ", " + reg2 + "\n");
+        return resultReg;
     }
 
     /**
@@ -575,6 +586,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         n.f0.accept(this, null);
         n.f2.accept(this, null);
 //        n.f4.accept(this, null);
+        //TODO EPEIGONTOS!!!
         return null;
     }
 
@@ -630,7 +642,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                 String llvmType;
                 String reg1 = get_register();
                 String reg2 = get_register();
-                String reg3 = get_register();
+//                String reg3 = get_register();
                 emit("\n");
                 buffer = "\t" + reg1 + " = getelementptr i8, i8* %this, i32 " + get_offset(expression, results[0], this.vTables) + "\n";
                 if (results[0].equals("int")) {
@@ -643,10 +655,10 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
 //                buffer += "i8**\n";
                     llvmType = "i8**";
                 }
-                buffer += "\t" + reg2 + " = bitcast i8* " + reg2 + " to " + llvmType + "\n";
+                buffer += "\t" + reg2 + " = bitcast i8* " + reg1 + " to " + llvmType + "\n";
 //                buffer += "\t" + reg3 + " = load i8*, i8** " + reg2 + "\n";
                 emit(buffer);
-                return reg1;
+                return reg2;
             }
             // Parameter or variable
             else {

@@ -454,8 +454,22 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f6 -> Statement()
      */
     public String visit(IfStatement n, String str) throws Exception {
+        String regExpr = n.f2.accept(this, null);
+        String label1 = get_if_label();
+        String label2 = get_if_label();
+        String label3 = get_if_label();
+        emit("\tbr i1 " + regExpr + ", label " + label1 +", label " + label2 + "\n");
+
+        // if
+        emit("\n" + label1 + ":\n");
         n.f4.accept(this, null);
+        emit("\n\tbr label " + label3 + "\n");
+        emit("\n" + label2 + ":\n");
+
+        // else
         n.f6.accept(this, null);
+        emit("\n\tbr label " + label3 + "\n");
+        emit("\n" + label3 + ":\n");
         return null;
     }
 
@@ -509,8 +523,11 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f2 -> PrimaryExpression()
      */
     public String visit(CompareExpression n, String str) throws Exception {
-
-        return "boolean";
+        String reg1 = n.f0.accept(this, null);
+        String reg2 = n.f2.accept(this, null);
+        String resultReg = get_register();
+        emit("\t" + resultReg + " = icmp slt i32" + reg1 + ", " + reg2 + "\n");
+        return resultReg;
     }
 
 

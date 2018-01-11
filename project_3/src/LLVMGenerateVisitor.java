@@ -376,10 +376,10 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         n.f8.accept(this, null);
 
         // Return
-        emit("\n");
+//        emit("\n");
         String retExpr = n.f10.accept(this, null);
         String retRegister = get_register();
-        buffer = "\t" + retRegister + " = " + retExpr + '\n';
+        buffer = "\t" + retRegister + " = load "+ llvmMethType + ", "+ llvmMethType +"* " + retExpr + '\n';
         buffer += "\tret " + llvmMethType + " " + retRegister + "\n}\n";
         emit(buffer);
         this.ifLabel = 0;
@@ -396,6 +396,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      */
     public String visit(AssignmentStatement n, String str) throws Exception {
 //        store i32 1, i32* %num_aux
+//        bitcast i32* %ptr2 to i8**
         String buffer;
 
         String identifier = n.f0.accept(this, null);
@@ -404,24 +405,24 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         String expr = n.f2.accept(this, null);
 //        System.err.println(expr);
         String llvmType;
-
         String targetRegister;
         if (results[1].equals("field")) {
             String reg1 = get_register();
             String reg2 = get_register();
             emit("\n");
-            buffer = "\t" + reg1 + " getelementptr i8, i8* %this, i32 " + get_offset(identifier, results[0], vTables) + "\n";
-            buffer += "\t" + reg2 + " bitcast i8* %_1 to ";
+            buffer = "\t" + reg1 + " = getelementptr i8, i8* %this, i32 " + get_offset(identifier, results[0], this.vTables) + "\n";
+
             if (results[0].equals("int")) {
-                buffer += "i32*\n";
+//                buffer += "i32*\n";
                 llvmType = "i32*";
             } else if (results[0].equals("boolean")) {
-                buffer += "i1*\n";
+//                buffer += "i1*\n";
                 llvmType = "i1*";
             } else {
-                buffer += "i8**\n";
+//                buffer += "i8**\n";
                 llvmType = "i8**";
             }
+            buffer += "\t" + reg2 + " = bitcast i8* " + reg1 + " to " + llvmType + "\n";
             targetRegister = reg2;
             emit(buffer);
         }
@@ -607,43 +608,62 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      */
     public String visit(PrimaryExpression n, String str) throws Exception {
         String expression = n.f0.accept(this, str);
+        // Return immediately if child visitor forced you
         if (this.returnPrimary) {
             this.returnPrimary = false;
             return expression;
         }
         if (expression.matches("-?\\d+")) {
             return expression;
-        } else if (expression.equals("true") || expression.equals("false")) {
-            return "boolean";
+        } else if (expression.equals("true")) {
+            return "1";
+        } else if (expression.equals("false")) {
+            return "0";
         } else if (expression.equals("this")) {
             return "this";
-        } else {
+        }
+        // Not primitive
+        else {
             String results[] = look_up_identifier(expression, this.symbolTable);
             String buffer;
-            if (results[1].equals("parameter")) {
+            if (results[1].equals("field")) {
+                String llvmType;
                 String reg1 = get_register();
-                buffer = "\n\t" + reg1 + "= load ";
-                if (results[2].equals("int")) {
+                String reg2 = get_register();
+                String reg3 = get_register();
+                emit("\n");
+                buffer = "\t" + reg1 + " = getelementptr i8, i8* %this, i32 " + get_offset(expression, results[0], this.vTables) + "\n";
+                if (results[0].equals("int")) {
+//                buffer += "i32*\n";
+                    llvmType = "i32*";
+                } else if (results[0].equals("boolean")) {
+//                buffer += "i1*\n";
+                    llvmType = "i1*";
+                } else {
+//                buffer += "i8**\n";
+                    llvmType = "i8**";
+                }
+                buffer += "\t" + reg2 + " = bitcast i8* " + reg2 + " to " + llvmType + "\n";
+//                buffer += "\t" + reg3 + " = load i8*, i8** " + reg2 + "\n";
+                emit(buffer);
+                return reg1;
+            }
+            // Parameter or variable
+            else {
+                String reg1 = get_register();
+                buffer = "\n\t" + reg1 + " = load ";
+                if (results[0].equals("int")) {
                     buffer += "i32, i32* ";
 
-                } else if (results[2].equals("boolean")) {
+                } else if (results[0].equals("boolean")) {
                     buffer += "i1, i1* ";
                 } else {
                     buffer += "i8*, i8** ";
                 }
-                buffer += "%" + expression;
+                buffer += "%" + expression + "\n";
                 emit(buffer);
                 return reg1;
-            } else if (results[1].equals("field")) {
-                //TODO
-                return expression;
-            } else {
-                return expression;
             }
-
-
-//            this.returnPrimaryExpr = false;
-//            return null;
         }
     }
 

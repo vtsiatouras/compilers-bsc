@@ -17,6 +17,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
     private int ifLabel;
     private String currentClass;
     private String currentMethod;
+    private boolean returnPrimary;
 
     LLVMGenerateVisitor(String fileName, VTables vTables, SymbolTable symbolTable) {
         this.vTables = vTables;
@@ -104,7 +105,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         throw new Exception("Identifier not found!");
     }
 
-    private int get_offset(String identifier, String type, VTables vTables) throws Exception{
+    private int get_offset(String identifier, String type, VTables vTables) throws Exception {
         VTables.ClassVTable classVTable = vTables.classesTables.get(this.currentClass);
         // Check if it is field
         if (classVTable.fieldsTable.containsKey(identifier)) {
@@ -113,11 +114,28 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             System.err.println(offset);
             return offset;
         } else if (classVTable.methodsTable.containsKey(identifier)) {
-            int offset =  Integer.parseInt(classVTable.methodsTable.get(identifier).toString());
+            int offset = Integer.parseInt(classVTable.methodsTable.get(identifier).toString());
             offset += 8;
             return offset;
         }
         throw new Exception("Identifier not found!");
+    }
+
+    private int get_class_size(String className, SymbolTable symbolTable) {
+        SymbolTable.ClassSymTable curClass = symbolTable.classes.get(className);
+        int size = 0;
+        for (Map.Entry classEntryFields : curClass.fields.entrySet()) {
+            String type = classEntryFields.getValue().toString();
+            if (type.equals("int")) {
+                size += 4;
+            } else if (type.equals("boolean")) {
+                size += 1;
+            } else {
+                size += 8;
+            }
+        }
+        size += 8;
+        return size;
     }
 
     void llvm_create_v_tables() {
@@ -236,8 +254,11 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      */
     public String visit(MainClass n, String str) throws Exception {
         emit("\ndefine i32 @main() {\n");
+        this.currentClass = n.f1.accept(this, null);
+        this.currentMethod = "main";
+        n.f14.accept(this, null);
+        n.f15.accept(this, null);
 
-        emit("\n");
         emit("}\n");
         this.ifLabel = 0;
         this.loopLabel = 0;
@@ -355,6 +376,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         n.f8.accept(this, null);
 
         // Return
+        emit("\n");
         String retExpr = n.f10.accept(this, null);
         String retRegister = get_register();
         buffer = "\t" + retRegister + " = " + retExpr + '\n';
@@ -375,48 +397,47 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
     public String visit(AssignmentStatement n, String str) throws Exception {
 //        store i32 1, i32* %num_aux
         String buffer;
-        String identifier = n.f0.accept(this, null);
 
+        String identifier = n.f0.accept(this, null);
         String results[] = look_up_identifier(identifier, this.symbolTable);
+
         String expr = n.f2.accept(this, null);
 //        System.err.println(expr);
         String llvmType;
-        String reg1 = get_register();
-        String reg2 = get_register();
-        if (results[1].equals("parameter")) {
-//            String reg1 = get_register();
-//            String reg2 = get_register();
-//            buffer = "\t" + reg1 + "= load ";
-//            if (results[2].equals("int")) {
-//                buffer += "i32, i32*";
-//
-//            } else if (results[2].equals("boolean")) {
-//                buffer += "i1, i1*";
-//            } else {
-//                buffer += "i8*, i8**";
-//            }
-//            emit(buffer);
-            llvmType ="asdf";
-        }
-//        getelementptr i8, i8* %this, i32 16
-//        else if (results[1].equals("field")) {
-        else{
 
-            buffer = "\t" + reg1 + " getelementptr i8, i8* %this, i32 " + get_offset(identifier, results[0],vTables) + "\n";
+        String targetRegister;
+        if (results[1].equals("field")) {
+            String reg1 = get_register();
+            String reg2 = get_register();
+            emit("\n");
+            buffer = "\t" + reg1 + " getelementptr i8, i8* %this, i32 " + get_offset(identifier, results[0], vTables) + "\n";
             buffer += "\t" + reg2 + " bitcast i8* %_1 to ";
             if (results[0].equals("int")) {
                 buffer += "i32*\n";
                 llvmType = "i32*";
-            } else if (results[2].equals("boolean")) {
+            } else if (results[0].equals("boolean")) {
                 buffer += "i1*\n";
                 llvmType = "i1*";
             } else {
                 buffer += "i8**\n";
                 llvmType = "i8**";
             }
+            targetRegister = reg2;
             emit(buffer);
         }
-        buffer = "\tstore "+ llvmType.substring(0, llvmType.length() - 1) + " " + expr + ", " + llvmType + " " + reg2 + "\n";
+        // Variable or parameter
+        else {
+            if (results[0].equals("int")) {
+                llvmType = "i32*";
+            } else if (results[0].equals("boolean")) {
+                llvmType = "i1*";
+            } else {
+                llvmType = "i8**";
+            }
+            targetRegister = "%" + identifier;
+        }
+
+        buffer = "\n\tstore " + llvmType.substring(0, llvmType.length() - 1) + " " + expr + ", " + llvmType + " " + targetRegister + "\n";
         emit(buffer);
         return null;
     }
@@ -456,7 +477,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f4 -> ";"
      */
     public String visit(PrintStatement n, String str) throws Exception {
-
+        n.f2.accept(this, null);
         return null;
     }
 
@@ -550,7 +571,9 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f5 -> ")"
      */
     public String visit(MessageSend n, String str) throws Exception {
-
+        n.f0.accept(this, null);
+        n.f2.accept(this, null);
+//        n.f4.accept(this, null);
         return null;
     }
 
@@ -584,10 +607,13 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      */
     public String visit(PrimaryExpression n, String str) throws Exception {
         String expression = n.f0.accept(this, str);
-        if(expression.matches("-?\\d+")){
+        if (this.returnPrimary) {
+            this.returnPrimary = false;
             return expression;
         }
-        else if (expression.equals("true") || expression.equals("false")) {
+        if (expression.matches("-?\\d+")) {
+            return expression;
+        } else if (expression.equals("true") || expression.equals("false")) {
             return "boolean";
         } else if (expression.equals("this")) {
             return "this";
@@ -596,18 +622,20 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             String buffer;
             if (results[1].equals("parameter")) {
                 String reg1 = get_register();
-                buffer = "\t" + reg1 + "= load ";
+                buffer = "\n\t" + reg1 + "= load ";
                 if (results[2].equals("int")) {
-                    buffer += "i32, i32*";
+                    buffer += "i32, i32* ";
 
                 } else if (results[2].equals("boolean")) {
-                    buffer += "i1, i1*";
+                    buffer += "i1, i1* ";
                 } else {
-                    buffer += "i8*, i8**";
+                    buffer += "i8*, i8** ";
                 }
+                buffer += "%" + expression;
                 emit(buffer);
                 return reg1;
             } else if (results[1].equals("field")) {
+                //TODO
                 return expression;
             } else {
                 return expression;
@@ -638,8 +666,24 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f3 -> ")"
      */
     public String visit(AllocationExpression n, String str) throws Exception {
+        String className = n.f1.accept(this, str);
+        // Get class size and the number of methods that are contained
+        int classSize = get_class_size(className, this.symbolTable);
+        VTables.ClassVTable classVTable = this.vTables.classesTables.get(className);
+        int numberOfMethods = classVTable.methodsTable.size();
 
-        return null;
+        String buffer;
+        String reg1 = get_register();
+        String reg2 = get_register();
+        String reg3 = get_register();
+        emit("\n");
+        buffer = "\t" + reg1 + " = call i8* @calloc(i32 1, i32 " + classSize + ")\n";
+        buffer += "\t" + reg2 + " = bitcast i8* " + reg1 + " to i8***\n";
+        buffer += "\t" + reg3 + " = getelementptr [" + numberOfMethods + " x i8*], [" + numberOfMethods + " x i8*]* @." + className + "_vtable, i32 0, i32 0\n";
+        buffer += "\tstore i8** " + reg3 + ", i8*** " + reg2;
+        emit(buffer);
+        this.returnPrimary = true;
+        return reg1;
     }
 
     /**

@@ -483,6 +483,22 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f4 -> Statement()
      */
     public String visit(WhileStatement n, String str) throws Exception {
+        String loop1 = get_loop_label();
+        String loop2 = get_loop_label();
+        String loop3 = get_loop_label();
+//        String reg1 = get_register();
+//        String reg2 = get_register();
+
+        emit("\n\tbr label %" + loop1 + "\n");
+        emit("\n" + loop1 + ":\n");
+        String reg = n.f2.accept(this, null);
+        emit("\tbr i1 " + reg + ", label %" + loop2 + ", label %" + loop3 + "\n");
+
+        emit("\n" + loop2 + ":\n");
+        reg = n.f4.accept(this, null);
+        emit("\n\tbr label %" + loop1 + "\n");
+
+        emit("\n" + loop3 + ":\n");
 
         return null;
     }

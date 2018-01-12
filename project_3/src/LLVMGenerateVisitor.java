@@ -2,7 +2,7 @@ import syntaxtree.*;
 import visitor.GJDepthFirst;
 
 import java.io.*;
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @SuppressWarnings("Duplicates") // Remove IntelliJ warning about duplicate code
@@ -17,12 +17,14 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
     private int ifLabel;
     private String currentClass;
     private String currentMethod;
-    private boolean returnPrimary;
+    private boolean returnPrimaryExpr;
+    private LinkedHashMap<String, String> registerTypes;
 
     LLVMGenerateVisitor(String fileName, VTables vTables, SymbolTable symbolTable) {
         this.vTables = vTables;
         this.symbolTable = symbolTable;
         this.fileName = fileName;
+        this.registerTypes = new LinkedHashMap<>();
         // Create "out" directory to store generated LLVM code
         File dir = new File("LLVM");
         // If the directory does not exist, create it
@@ -106,7 +108,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
     }
 
     private int get_offset(String identifier, String type, VTables vTables) throws Exception {
-        VTables.ClassVTable classVTable = vTables.classesTables.get(this.currentClass);
+        VTables.ClassVTable classVTable = vTables.classesTables.get(type);
         // Check if it is field
         if (classVTable.fieldsTable.containsKey(identifier)) {
             int offset = Integer.parseInt(classVTable.fieldsTable.get(identifier).toString());
@@ -115,7 +117,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             return offset;
         } else if (classVTable.methodsTable.containsKey(identifier)) {
             int offset = Integer.parseInt(classVTable.methodsTable.get(identifier).toString());
-            offset += 8;
+//            offset += 8;
             return offset;
         }
         throw new Exception("Identifier not found!");
@@ -411,7 +413,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             String reg1 = get_register();
             String reg2 = get_register();
             emit("\n");
-            buffer = "\t" + reg1 + " = getelementptr i8, i8* %this, i32 " + get_offset(identifier, results[0], this.vTables) + "\n";
+            buffer = "\t" + reg1 + " = getelementptr i8, i8* %this, i32 " + get_offset(identifier, results[2], this.vTables) + "\n";
 
             if (results[0].equals("int")) {
 //                buffer += "i32*\n";
@@ -458,7 +460,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         String label1 = get_if_label();
         String label2 = get_if_label();
         String label3 = get_if_label();
-        emit("\tbr i1 " + regExpr + ", label " + label1 +", label " + label2 + "\n");
+        emit("\tbr i1 " + regExpr + ", label " + label1 + ", label " + label2 + "\n");
 
         // if
         emit("\n" + label1 + ":\n");
@@ -493,8 +495,8 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f4 -> ";"
      */
     public String visit(PrintStatement n, String str) throws Exception {
-        String register = n.f2.accept(this, null);
-        emit("\tcall void (i32) @print_int(i32 " + register + ")\n");
+        String expr = n.f2.accept(this, null);
+        emit("\n\tcall void (i32) @print_int(i32 " + expr + ")\n");
         return null;
     }
 
@@ -600,10 +602,31 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f5 -> ")"
      */
     public String visit(MessageSend n, String str) throws Exception {
-        n.f0.accept(this, null);
-        n.f2.accept(this, null);
+        this.returnPrimaryExpr = true;
+        // Visit PrimaryExpression
+        String register = n.f0.accept(this, null);
+        String registerType = this.registerTypes.get(register);
+        // Use current Class type if 'this' is used
+//        if (register.equals("this")) {
+//            varType = this.currentClassName;
+//        } else {
+//            varType = look_up_identifier(var, symbolTable);
+//        }
+        // The only case that is allowed without object name
+        // Is when the object is created in the same line
+//        if (varType == null) {
+//            if (!symbolTable.classes.containsKey(var)) {
+//                throw new Exception("Unknown symbol '" + var + "'");
+//            } else {
+//                varType = var;
+//            }
+
+//        }
+
+        String methName = n.f2.accept(this, null);
+        int offset = get_offset(methName, registerType, this.vTables);
+        emit("\n\t; " + registerType + "." + methName + " : " + offset);
 //        n.f4.accept(this, null);
-        //TODO EPEIGONTOS!!!
         return null;
     }
 
@@ -638,8 +661,8 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
     public String visit(PrimaryExpression n, String str) throws Exception {
         String expression = n.f0.accept(this, str);
         // Return immediately if child visitor forced you
-        if (this.returnPrimary) {
-            this.returnPrimary = false;
+        if (this.returnPrimaryExpr) {
+            this.returnPrimaryExpr = false;
             return expression;
         }
         if (expression.matches("-?\\d+")) {
@@ -661,7 +684,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                 String reg2 = get_register();
 //                String reg3 = get_register();
                 emit("\n");
-                buffer = "\t" + reg1 + " = getelementptr i8, i8* %this, i32 " + get_offset(expression, results[0], this.vTables) + "\n";
+                buffer = "\t" + reg1 + " = getelementptr i8, i8* %this, i32 " + get_offset(expression, results[2], this.vTables) + "\n";
                 if (results[0].equals("int")) {
 //                buffer += "i32*\n";
                     llvmType = "i32*";
@@ -731,7 +754,8 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         buffer += "\t" + reg3 + " = getelementptr [" + numberOfMethods + " x i8*], [" + numberOfMethods + " x i8*]* @." + className + "_vtable, i32 0, i32 0\n";
         buffer += "\tstore i8** " + reg3 + ", i8*** " + reg2;
         emit(buffer);
-        this.returnPrimary = true;
+        this.returnPrimaryExpr = true;
+        this.registerTypes.put(reg1, className);
         return reg1;
     }
 

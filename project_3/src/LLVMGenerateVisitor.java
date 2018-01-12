@@ -17,6 +17,8 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
     private int loopLabel;
     private int ifLabel;
     private int andLabel;
+    private int boundsLabel;
+    private int arrAllocLabel;
     private String currentClass;
     private String currentMethod;
     private boolean returnPrimaryExpr;
@@ -24,6 +26,12 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
     private ArrayList<String> methodArgs;
 
     LLVMGenerateVisitor(String fileName, VTables vTables, SymbolTable symbolTable) {
+        this.register = 0;
+        this.loopLabel = 0;
+        this.ifLabel = 0;
+        this.andLabel = 0;
+        this.boundsLabel = 0;
+        this.arrAllocLabel = 0;
         this.vTables = vTables;
         this.symbolTable = symbolTable;
         this.fileName = fileName;
@@ -85,6 +93,18 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         int retVal = this.andLabel;
         this.andLabel++;
         return "andclause" + retVal;
+    }
+
+    String get_bound_label() {
+        int retVal = this.boundsLabel;
+        this.boundsLabel++;
+        return "oob" + retVal;
+    }
+
+    String get_arr_alloc_label() {
+        int retVal = this.arrAllocLabel;
+        this.arrAllocLabel++;
+        return "arr_alloc" + retVal;
     }
 
     // This method lookups field and var names within a class which is visited this time of execution
@@ -182,6 +202,8 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                     buffer += "i8* bitcast (i32 (i8*";
                 } else if (methodRetType.equals("boolean")) {
                     buffer += "i8* bitcast (i1 (i8*";
+                } else if (methodRetType.equals("int[]")) { //todo
+                    buffer += "i8* bitcast (i32* (i8*";
                 } else {
                     buffer += "i8* bitcast (i8* (i8*";
                 }
@@ -192,7 +214,9 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                         buffer += ",i32";
                     } else if (paramType.equals("boolean")) {
                         buffer += ",i1";
-                    } else {
+                    } else if (paramType.equals("int[]")) { //todo
+                        buffer += ",i32*";
+                    }else {
                         buffer += ",i8*";
                     }
                 }
@@ -272,9 +296,12 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         n.f15.accept(this, null);
 
         emit("\n\tret i32 0\n}\n");
-        this.ifLabel = 0;
-        this.loopLabel = 0;
         this.register = 0;
+        this.loopLabel = 0;
+        this.ifLabel = 0;
+        this.andLabel = 0;
+        this.boundsLabel = 0;
+        this.arrAllocLabel = 0;
         return null;
     }
 
@@ -288,7 +315,6 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      */
     public String visit(ClassDeclaration n, String str) throws Exception {
         this.currentClass = n.f1.accept(this, null);
-//        n.f3.accept(this, null);
         n.f4.accept(this, null);
         return null;
     }
@@ -306,6 +332,8 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             buffer += "i32\n";
         } else if (type.equals("boolean")) {
             buffer += "i1\n";
+        } else if (type.equals("int[]")) { //todo
+            buffer += "i32*\n";
         } else {
             buffer += "i8*\n";
         }
@@ -339,6 +367,9 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         } else if (methodType.equals("boolean")) {
             buffer += "i1";
             llvmMethType = "i1";
+        } else if (methodType.equals("int[]")) {
+            buffer += "i32*";
+            llvmMethType = "i32*";
         } else {
             buffer += "i8*";
             llvmMethType = "i8*";
@@ -357,6 +388,8 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                 buffer += ", i32";
             } else if (paramType.equals("boolean")) {
                 buffer += ", i1";
+            } else if (paramType.equals("int[]")) {
+                buffer += ", i32*";
             } else {
                 buffer += ", i8*";
             }
@@ -376,6 +409,9 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             } else if (paramType.equals("boolean")) {
                 buffer += "i1\n";
                 buffer += "\tstore i1 %." + paramName + ", i1* %" + paramName;
+            } else if (methodType.equals("int[]")) { //todo na to tsekarw
+                buffer += "i32*\n";
+                buffer += "\tstore i32* %." + paramName + ", i32** %" + paramName;
             } else {
                 buffer += "i8*\n";
                 buffer += "\tstore i8* %." + paramName + ", i8** %" + paramName;
@@ -395,9 +431,12 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
 //        buffer = "\t" + retRegister + " = load " + llvmMethType + ", " + llvmMethType + "* " + retExpr + '\n';
         buffer = "\n\tret " + llvmMethType + " " + retExpr + "\n}\n";
         emit(buffer);
-        this.ifLabel = 0;
-        this.loopLabel = 0;
         this.register = 0;
+        this.loopLabel = 0;
+        this.ifLabel = 0;
+        this.andLabel = 0;
+        this.boundsLabel = 0;
+        this.arrAllocLabel = 0;
         return null;
     }
 
@@ -429,6 +468,8 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                 llvmType = "i32*";
             } else if (results[0].equals("boolean")) {
                 llvmType = "i1*";
+            } else if (results[0].equals("int[]")) {
+                llvmType = "i32**";
             } else {
                 llvmType = "i8**";
             }
@@ -442,6 +483,8 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                 llvmType = "i32*";
             } else if (results[0].equals("boolean")) {
                 llvmType = "i1*";
+            } else if (results[0].equals("int[]")) {
+                llvmType = "i32**";
             } else {
                 llvmType = "i8**";
             }
@@ -622,7 +665,12 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f3 -> "]"
      */
     public String visit(ArrayLookup n, String str) throws Exception {
+        String lbl1 = get_bound_label();
+        String lbl2 = get_bound_label();
+        String lbl3 = get_bound_label();
 
+        String reg1 = n.f0.accept(this, null);
+        String reg2 = n.f2.accept(this, null);
         return "int";
     }
 
@@ -693,6 +741,9 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         } else if (methodType.equals("boolean")) {
             buffer += "i1 (i8*";
             llvmMethType = "i1";
+        } else if (methodType.equals("int[]")) { //todo na to tsekarw
+            buffer += "i32* (i8*";
+            llvmMethType = "i32*";
         } else {
             buffer += "i8* (i8*";
             llvmMethType = "i8*";
@@ -703,6 +754,8 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                 buffer += ", i32";
             } else if (paramType.equals("boolean")) {
                 buffer += ", i1";
+            } else if (methodType.equals("int[]")) { //todo na to tsekarw
+                buffer += ", i32*";
             } else {
                 buffer += ", i8*";
             }
@@ -721,6 +774,8 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                 buffer += ", i32 " + reg;
             } else if (paramType.equals("boolean")) {
                 buffer += ", i1 " + reg;
+            } else if (methodType.equals("int[]")) { //todo na to tsekarw
+                buffer += ", i32* " + reg;
             } else {
                 buffer += ", i8* " + reg;
             }
@@ -835,6 +890,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f4 -> "]"
      */
     public String visit(ArrayAllocationExpression n, String str) throws Exception {
+        String reg = n.f1.accept(this, null);
 
         return "int[]";
     }

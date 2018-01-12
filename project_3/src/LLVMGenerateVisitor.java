@@ -2,6 +2,7 @@ import syntaxtree.*;
 import visitor.GJDepthFirst;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -19,6 +20,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
     private String currentMethod;
     private boolean returnPrimaryExpr;
     private LinkedHashMap<String, String> registerTypes;
+    private ArrayList<String> methodArgs;
 
     LLVMGenerateVisitor(String fileName, VTables vTables, SymbolTable symbolTable) {
         this.vTables = vTables;
@@ -442,7 +444,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             targetRegister = "%" + identifier;
         }
 
-        buffer = "\tstore " + llvmType.substring(0, llvmType.length() - 1) + " " +  expr + ", " + llvmType + " " + targetRegister + "\n";
+        buffer = "\tstore " + llvmType.substring(0, llvmType.length() - 1) + " " + expr + ", " + llvmType + " " + targetRegister + "\n";
         emit(buffer);
         return null;
     }
@@ -629,9 +631,19 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         SymbolTable.ClassSymTable classSymTable = this.symbolTable.classes.get(registerType);
         SymbolTable.MethodSymTable methodSymTable = classSymTable.methods.get(methName);
         String methodType = methodSymTable.returnType;
+
+        // Create an array to hold up the types of parameters
+        // If it is already created then it is assumed where are in nested call
+        // Hold the data of the current array and create a new one to type check the nested call
+        ArrayList<String> backupMethodArgs = null;
+        boolean methodArgsTempFlag = false;
+        if (this.methodArgs != null) {
+            methodArgsTempFlag = true;
+            backupMethodArgs = new ArrayList<>(this.methodArgs);
+        }
+        this.methodArgs = new ArrayList<>();
         // Visit parameters
-        // TODO
-        //        n.f4.accept(this, null);
+        n.f4.accept(this, null);
 
         int offset = get_offset(methName, registerType, this.vTables);
         emit("\n\t; " + registerType + "." + methName + " : " + offset + "\n");
@@ -665,13 +677,36 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             } else if (paramType.equals("boolean")) {
                 buffer += ", i1";
             } else {
-                buffer += ", i8**";
+                buffer += ", i8*";
             }
         }
         buffer += ")*\n";
-        // todo na apo8hkeusw se ena array list h kati tetoio ta param registers
-        buffer += "\t" + reg6 + " = call " + llvmMethType + " " + reg5 + "(i8* " + register + ")\n";
+        buffer += "\t" + reg6 + " = call " + llvmMethType + " " + reg5 + "(i8* " + register;
+
+        // Insert parameters
+        for (int i = 0; i < this.methodArgs.size(); i++) {
+            String paramType = (new ArrayList<>(methodSymTable.parameters.values())).get(i);
+            String reg = this.methodArgs.get(i);
+            if (paramType.equals("int")) {
+                buffer += ", i32 " + reg;
+            } else if (paramType.equals("boolean")) {
+                buffer += ", i1 " + reg;
+            } else {
+                buffer += ", i8* " + reg;
+            }
+        }
+
+        buffer += ")\n";
+
         emit(buffer);
+
+        // Erase the array
+        this.methodArgs = null;
+        // Restore previous array if was existed before the MessageSend visit
+        if (methodArgsTempFlag) {
+            this.methodArgs = new ArrayList<>(backupMethodArgs);
+        }
+        this.returnPrimaryExpr = false;
         return reg6;
     }
 
@@ -680,7 +715,20 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f1 -> ExpressionTail()
      */
     public String visit(ExpressionList n, String str) throws Exception {
-
+        this.returnPrimaryExpr = false;
+        String register = n.f0.accept(this, null);
+//        String registerType = this.registerTypes.get(register);
+//        String llvmType;
+//        if (registerType.equals("int")) {
+//            llvmType = "i32";
+//        } else if (registerType.equals("boolean")) {
+//            llvmType = "i1";
+//        } else {
+//            llvmType = "i8*";
+//        }
+//        this.methodArgs.add(var);
+        this.methodArgs.add(register);
+        n.f1.accept(this, null);
         return null;
     }
 
@@ -689,7 +737,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f1 -> Expression()
      */
     public String visit(ExpressionTerm n, String str) throws Exception {
-
+        this.methodArgs.add(n.f1.accept(this, null));
         return null;
     }
 

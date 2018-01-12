@@ -109,6 +109,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         throw new Exception("Identifier not found!");
     }
 
+    //Todo na kanw mia offset gia methods mono!
     private int get_offset(String identifier, String type, VTables vTables) throws Exception {
         VTables.ClassVTable classVTable = vTables.classesTables.get(type);
         // Check if it is field
@@ -119,7 +120,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             return offset;
         } else if (classVTable.methodsTable.containsKey(identifier)) {
             int offset = Integer.parseInt(classVTable.methodsTable.get(identifier).toString());
-//            offset += 8;
+            offset /= 8;
             return offset;
         }
         throw new Exception("Identifier not found!");
@@ -400,8 +401,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f3 -> ";"
      */
     public String visit(AssignmentStatement n, String str) throws Exception {
-//        store i32 1, i32* %num_aux
-//        bitcast i32* %ptr2 to i8**
+
         String buffer;
 
         String identifier = n.f0.accept(this, null);
@@ -419,13 +419,10 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             buffer = "\t" + reg1 + " = getelementptr i8, i8* %this, i32 " + get_offset(identifier, results[2], this.vTables) + "\n";
 
             if (results[0].equals("int")) {
-//                buffer += "i32*\n";
                 llvmType = "i32*";
             } else if (results[0].equals("boolean")) {
-//                buffer += "i1*\n";
                 llvmType = "i1*";
             } else {
-//                buffer += "i8**\n";
                 llvmType = "i8**";
             }
             buffer += "\t" + reg2 + " = bitcast i8* " + reg1 + " to " + llvmType + "\n";
@@ -613,19 +610,6 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         if (register.equals("%this")) {
             registerType = this.currentClass;
         }
-//      else {
-//            registerType = look_up_identifier(var, symbolTable);
-//        }
-        // The only case that is allowed without object name
-        // Is when the object is created in the same line
-//        if (varType == null) {
-//            if (!symbolTable.classes.containsKey(var)) {
-//                throw new Exception("Unknown symbol '" + var + "'");
-//            } else {
-//                varType = var;
-//            }
-
-//        }
 
         String methName = n.f2.accept(this, null);
         SymbolTable.ClassSymTable classSymTable = this.symbolTable.classes.get(registerType);
@@ -642,10 +626,10 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             backupMethodArgs = new ArrayList<>(this.methodArgs);
         }
         this.methodArgs = new ArrayList<>();
-        // Visit parameters
-        n.f4.accept(this, null);
+
 
         int offset = get_offset(methName, registerType, this.vTables);
+        System.err.println("offset " + offset);
         emit("\n\t; " + registerType + "." + methName + " : " + offset + "\n");
         String reg1 = get_register();
         String reg2 = get_register();
@@ -655,7 +639,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         String reg6 = get_register();
         String buffer = "\t" + reg1 + " = bitcast i8* " + register + " to i8***\n";
         buffer += "\t" + reg2 + " = load i8**, i8*** " + reg1 + "\n";
-        buffer += "\t" + reg3 + " = getelementptr i8*, i8** " + reg2 + ", i32 0\n";
+        buffer += "\t" + reg3 + " = getelementptr i8*, i8** " + reg2 + ", i32 " + offset + "\n";
         buffer += "\t" + reg4 + " = load i8*, i8** " + reg3 + "\n";
         buffer += "\t" + reg5 + " = bitcast i8* " + reg4 + " to ";
 
@@ -681,7 +665,10 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             }
         }
         buffer += ")*\n";
-        buffer += "\t" + reg6 + " = call " + llvmMethType + " " + reg5 + "(i8* " + register;
+        emit(buffer);
+        // Visit parameters
+        n.f4.accept(this, null);
+        buffer = "\t" + reg6 + " = call " + llvmMethType + " " + reg5 + "(i8* " + register;
 
         // Insert parameters
         for (int i = 0; i < this.methodArgs.size(); i++) {
@@ -717,16 +704,6 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
     public String visit(ExpressionList n, String str) throws Exception {
         this.returnPrimaryExpr = false;
         String register = n.f0.accept(this, null);
-//        String registerType = this.registerTypes.get(register);
-//        String llvmType;
-//        if (registerType.equals("int")) {
-//            llvmType = "i32";
-//        } else if (registerType.equals("boolean")) {
-//            llvmType = "i1";
-//        } else {
-//            llvmType = "i8*";
-//        }
-//        this.methodArgs.add(var);
         this.methodArgs.add(register);
         n.f1.accept(this, null);
         return null;
@@ -775,21 +752,16 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                 String llvmType;
                 String reg1 = get_register();
                 String reg2 = get_register();
-//                String reg3 = get_register();
                 emit("\n");
                 buffer = "\t" + reg1 + " = getelementptr i8, i8* %this, i32 " + get_offset(expression, results[2], this.vTables) + "\n";
                 if (results[0].equals("int")) {
-//                buffer += "i32*\n";
                     llvmType = "i32*";
                 } else if (results[0].equals("boolean")) {
-//                buffer += "i1*\n";
                     llvmType = "i1*";
                 } else {
-//                buffer += "i8**\n";
                     llvmType = "i8**";
                 }
                 buffer += "\t" + reg2 + " = bitcast i8* " + reg1 + " to " + llvmType + "\n";
-//                buffer += "\t" + reg3 + " = load i8*, i8** " + reg2 + "\n";
                 emit(buffer);
                 return reg2;
             }

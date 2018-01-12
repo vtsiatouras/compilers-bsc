@@ -16,6 +16,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
     private int register;
     private int loopLabel;
     private int ifLabel;
+    private int andLabel;
     private String currentClass;
     private String currentMethod;
     private boolean returnPrimaryExpr;
@@ -78,6 +79,12 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         int retVal = this.ifLabel;
         this.ifLabel++;
         return "if" + retVal;
+    }
+
+    String get_and_label() {
+        int retVal = this.andLabel;
+        this.andLabel++;
+        return "andclause" + retVal;
     }
 
     // This method lookups field and var names within a class which is visited this time of execution
@@ -386,7 +393,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         String retExpr = n.f10.accept(this, null);
 //        String retRegister = get_register();
 //        buffer = "\t" + retRegister + " = load " + llvmMethType + ", " + llvmMethType + "* " + retExpr + '\n';
-        buffer = "\tret " + llvmMethType + " " + retExpr + "\n}\n";
+        buffer = "\n\tret " + llvmMethType + " " + retExpr + "\n}\n";
         emit(buffer);
         this.ifLabel = 0;
         this.loopLabel = 0;
@@ -486,16 +493,14 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         String loop1 = get_loop_label();
         String loop2 = get_loop_label();
         String loop3 = get_loop_label();
-//        String reg1 = get_register();
-//        String reg2 = get_register();
 
         emit("\n\tbr label %" + loop1 + "\n");
         emit("\n" + loop1 + ":\n");
-        String reg = n.f2.accept(this, null);
-        emit("\tbr i1 " + reg + ", label %" + loop2 + ", label %" + loop3 + "\n");
+        String reg1 = n.f2.accept(this, null);
+        emit("\tbr i1 " + reg1 + ", label %" + loop2 + ", label %" + loop3 + "\n");
 
         emit("\n" + loop2 + ":\n");
-        reg = n.f4.accept(this, null);
+        String reg2 = n.f4.accept(this, null);
         emit("\n\tbr label %" + loop1 + "\n");
 
         emit("\n" + loop3 + ":\n");
@@ -511,8 +516,8 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f4 -> ";"
      */
     public String visit(PrintStatement n, String str) throws Exception {
-        String expr = n.f2.accept(this, null);
-        emit("\n\tcall void (i32) @print_int(i32 " + expr + ")\n");
+        String reg = n.f2.accept(this, null);
+        emit("\tcall void (i32) @print_int(i32 " + reg + ")\n");
         return null;
     }
 
@@ -522,8 +527,28 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f2 -> Clause()
      */
     public String visit(AndExpression n, String str) throws Exception {
+        String andLbl1 = get_and_label();
+        String andLbl2 = get_and_label();
+        String andLbl3 = get_and_label();
+        String andLbl4 = get_and_label();
+        String phiReg = get_register();
 
-        return "boolean";
+        String reg1 = n.f0.accept(this, null);
+        emit("\tbr label %" + andLbl1 + "\n");
+        emit("\n" + andLbl1 + ":\n");
+        emit("\tbr i1 " + reg1 + ", label %" + andLbl2 + ", label %" + andLbl3 + "\n");
+
+        emit("\n" + andLbl2 + ":\n");
+        String reg2 = n.f2.accept(this, null);
+        emit("\tbr label %" + andLbl3 + "\n");
+
+        emit("\n" + andLbl3 + ":\n");
+        emit("\tbr label %" + andLbl4 + "\n");
+
+        emit("\n" + andLbl4 + ":\n");
+        emit("\t" + phiReg + " = phi i1 [ 0, %" + andLbl1 + " ], [ " + reg2 + ", %" + andLbl3 + " ]\n");
+
+        return phiReg;
     }
 
     /**
@@ -531,8 +556,10 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f1 -> Clause()
      */
     public String visit(NotExpression n, String str) throws Exception {
-
-        return "boolean";
+        String reg = n.f1.accept(this, null);
+        String xorReg = get_register();
+        emit("\t" + xorReg + " = xor i1 1," + reg + "\n");
+        return xorReg;
     }
 
     /**

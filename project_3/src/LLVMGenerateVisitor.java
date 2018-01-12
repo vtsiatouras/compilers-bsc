@@ -216,7 +216,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                         buffer += ",i1";
                     } else if (paramType.equals("int[]")) { //todo
                         buffer += ",i32*";
-                    }else {
+                    } else {
                         buffer += ",i8*";
                     }
                 }
@@ -468,7 +468,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                 llvmType = "i32*";
             } else if (results[0].equals("boolean")) {
                 llvmType = "i1*";
-            } else if (results[0].equals("int[]")) {
+            } else if (results[0].equals("int[]")) { //TODO NA VALW oob edw!!
                 llvmType = "i32**";
             } else {
                 llvmType = "i8**";
@@ -601,7 +601,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
     public String visit(NotExpression n, String str) throws Exception {
         String reg = n.f1.accept(this, null);
         String xorReg = get_register();
-        emit("\t" + xorReg + " = xor i1 1," + reg + "\n");
+        emit("\t" + xorReg + " = xor i1 1, " + reg + "\n");
         return xorReg;
     }
 
@@ -669,8 +669,17 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         String lbl2 = get_bound_label();
         String lbl3 = get_bound_label();
 
+
         String reg1 = n.f0.accept(this, null);
+        String tempreg1 = get_register();
+//        %_38 = load i32*, i32** %_37
+        emit("\t" + tempreg1 + " = load i32*, i32** " + reg1 + "\n");
         String reg2 = n.f2.accept(this, null);
+        String tempreg2 = get_register();
+        emit("\t" + tempreg2 + " = load i32, i32* " + reg2 + "\n");
+        String cmpReg = get_register();
+        emit("\t" + cmpReg + " = icmp ult i32 " + reg2 + " " + tempreg2 + "\n");
+
         return "int";
     }
 
@@ -856,6 +865,8 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                     llvmType = "i32*";
                 } else if (results[0].equals("boolean")) {
                     llvmType = "i1*";
+                } else if (results[0].equals("int[]")) { //todo
+                    llvmType = "i32**";
                 } else {
                     llvmType = "i8**";
                 }
@@ -869,9 +880,10 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                 buffer = "\n\t" + reg1 + " = load ";
                 if (results[0].equals("int")) {
                     buffer += "i32, i32* ";
-
                 } else if (results[0].equals("boolean")) {
                     buffer += "i1, i1* ";
+                } else if (results[0].equals("int[]")) { //todo
+                    buffer += "i32*, i32** ";
                 } else {
                     buffer += "i8*, i8** ";
                 }
@@ -890,9 +902,29 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f4 -> "]"
      */
     public String visit(ArrayAllocationExpression n, String str) throws Exception {
-        String reg = n.f1.accept(this, null);
+        String lbl1 = get_arr_alloc_label();
+        String lbl2 = get_arr_alloc_label();
+        String cmpReg = get_register();
+        String reg1 = get_register();
+        String reg2 = get_register();
+        String reg3 = get_register();
+//        %_6 = icmp slt i32 %_9, 0
+//        br i1 %_6, label %arr_alloc7, label %arr_alloc8
+        String reg = n.f3.accept(this, null);
+        emit("\t" + cmpReg + " = icmp slt i32 " + reg + ", 0\n");
+        emit("\tbr i1 " + cmpReg + ", label %" + lbl1 + ", label %" + lbl2 + "\n");
 
-        return "int[]";
+        emit(lbl1 + ":\n");
+        emit("\tcall void @throw_oob()\n");
+        emit("\tbr label %" + lbl2 + "\n");
+
+        emit(lbl2 + ":\n");
+        emit("\t" + reg1 + " = add i32 " + reg + ", 1\n");
+        emit("\t" + reg2 + " = call i8* @calloc(i32 4, i32 " + reg1 + ")\n");
+        emit("\t" + reg3 + " = bitcast i8* " + reg2 + " to i32*\n");
+        this.returnPrimaryExpr = true;
+        this.registerTypes.put(reg3, "int[]");
+        return reg3;
     }
 
     /**

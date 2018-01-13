@@ -548,9 +548,9 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
 
         emit("\t" + cmpReg + " = icmp ult i32 " + reg2 + ", " + tempreg2 + "\n");
         emit("\tbr i1 " + cmpReg + ", label %" + lbl1 + ", label %" + lbl2 + "\n");
+        emit("\n" + lbl1 + ":\n");
 
         String reg3 = n.f5.accept(this, null);
-        emit("\n" + lbl1 + ":\n");
         emit("\t" + tempreg3 + " = add i32 " + reg2 + ", 1\n");
         emit("\t" + tempreg4 + " = getelementptr i32, i32* " + tempreg1 + ", i32 " + tempreg3 + "\n");
         emit("\tstore i32 " + reg3 + ", i32* " + tempreg4 + "\n");
@@ -683,10 +683,12 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f2 -> PrimaryExpression()
      */
     public String visit(CompareExpression n, String str) throws Exception {
+        this.returnFieldValue = true;
         String reg1 = n.f0.accept(this, null);
+        this.returnFieldValue = true;
         String reg2 = n.f2.accept(this, null);
         String resultReg = get_register();
-        emit("\t" + resultReg + " = icmp slt i32" + reg1 + ", " + reg2 + "\n");
+        emit("\t" + resultReg + " = icmp slt i32 " + reg1 + ", " + reg2 + "\n");
         return resultReg;
     }
 
@@ -697,7 +699,9 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f2 -> PrimaryExpression()
      */
     public String visit(PlusExpression n, String str) throws Exception {
+        this.returnFieldValue = true;
         String reg1 = n.f0.accept(this, null);
+        this.returnFieldValue = true;
         String reg2 = n.f2.accept(this, null);
         String resultReg = get_register();
         emit("\t" + resultReg + " = add i32 " + reg1 + ", " + reg2 + "\n");
@@ -710,7 +714,9 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f2 -> PrimaryExpression()
      */
     public String visit(MinusExpression n, String str) throws Exception {
+        this.returnFieldValue = true;
         String reg1 = n.f0.accept(this, null);
+        this.returnFieldValue = true;
         String reg2 = n.f2.accept(this, null);
         String resultReg = get_register();
         emit("\t" + resultReg + " = sub i32 " + reg1 + ", " + reg2 + "\n");
@@ -723,7 +729,9 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f2 -> PrimaryExpression()
      */
     public String visit(TimesExpression n, String str) throws Exception {
+        this.returnFieldValue = true;
         String reg1 = n.f0.accept(this, null);
+        this.returnFieldValue = true;
         String reg2 = n.f2.accept(this, null);
         String resultReg = get_register();
         emit("\t" + resultReg + " = mul i32 " + reg1 + ", " + reg2 + "\n");
@@ -750,6 +758,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         String reg1 = n.f0.accept(this, null);
         emit("\t" + tempreg1 + " = load i32, i32* " + reg1 + "\n");
 
+        this.returnFieldValue = true;
         String reg2 = n.f2.accept(this, null);
 
 

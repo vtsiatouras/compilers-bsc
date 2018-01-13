@@ -22,6 +22,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
     private String currentClass;
     private String currentMethod;
     private boolean returnPrimaryExpr;
+    private boolean returnFieldValue;
     private LinkedHashMap<String, String> registerTypes;
     private ArrayList<String> methodArgs;
 
@@ -35,6 +36,8 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         this.vTables = vTables;
         this.symbolTable = symbolTable;
         this.fileName = fileName;
+        this.returnPrimaryExpr = false;
+        this.returnFieldValue = false;
         this.registerTypes = new LinkedHashMap<>();
         // Create "out" directory to store generated LLVM code
         File dir = new File("LLVM");
@@ -467,9 +470,6 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             } else if (results[0].equals("boolean")) {
                 llvmType = "i1*";
             } else if (results[0].equals("int[]")) {
-//                String arrReg = get_register();
-//                emit("\tstore i32 "+ arrReg + ", i32* " + expr + "\n");
-//                expr = arrReg;
                 llvmType = "i32**";
             } else {
                 llvmType = "i8**";
@@ -515,12 +515,11 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         String lbl1 = get_bound_label();
         String lbl2 = get_bound_label();
         String lbl3 = get_bound_label();
-        String tempreg1 = get_register();
+        String tempreg1;
         String tempreg2 = get_register();
         String cmpReg = get_register();
         String tempreg3 = get_register();
         String tempreg4 = get_register();
-        String tempreg5 = get_register();
 
 
         String reg1 = n.f0.accept(this, null);
@@ -559,7 +558,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         emit("\tbr label %" + lbl3 + "\n");
 
         emit("\n" + lbl2 + ":\n");
-        emit("\tcall void (i32) @print_int(i32 " + tempreg2 + ")\n"); //todo!!
+//        emit("\tcall void (i32) @print_int(i32 " + tempreg2 + ")\n"); //todo!!
         emit("\tcall void @throw_oob()\n");
         emit("\tbr label %" + lbl3 + "\n");
 
@@ -631,6 +630,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f4 -> ";"
      */
     public String visit(PrintStatement n, String str) throws Exception {
+        this.returnFieldValue = true;
         String reg = n.f2.accept(this, null);
         emit("\tcall void (i32) @print_int(i32 " + reg + ")\n");
         return null;
@@ -745,23 +745,21 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         String cmpReg = get_register();
         String tempreg3 = get_register();
         String tempreg4 = get_register();
-        String tempreg5 = get_register();
 
+        this.returnFieldValue = true;
         String reg1 = n.f0.accept(this, null);
-//        emit("\t" + tempreg1 + " = load i32*, i32** " + reg1 + "\n");
-        
-        emit("\t" + tempreg2 + " = load i32, i32* " + reg1 + "\n");
+        emit("\t" + tempreg1 + " = load i32, i32* " + reg1 + "\n");
 
         String reg2 = n.f2.accept(this, null);
 
 
-        emit("\t" + cmpReg + " = icmp ult i32 " + reg2 + ", " + tempreg2 + "\n");
+        emit("\t" + cmpReg + " = icmp ult i32 " + reg2 + ", " + tempreg1 + "\n");
         emit("\tbr i1 " + cmpReg + ", label %" + lbl1 + ", label %" + lbl2 + "\n");
 
         emit("\n" + lbl1 + ":\n");
-        emit("\t" + tempreg3 + " = add i32 " + reg2 + ", 1\n");
-        emit("\t" + tempreg4 + " = getelementptr i32, i32* " + reg1 + ", i32 " + tempreg3 + "\n");
-        emit("\t" + tempreg5 + " = load i32, i32* " + tempreg4 + "\n");
+        emit("\t" + tempreg2 + " = add i32 " + reg2 + ", 1\n");
+        emit("\t" + tempreg3 + " = getelementptr i32, i32* " + reg1 + ", i32 " + tempreg2 + "\n");
+        emit("\t" + tempreg4 + " = load i32, i32* " + tempreg3 + "\n");
         emit("\tbr label %" + lbl3 + "\n");
 
         emit("\n" + lbl2 + ":\n");
@@ -771,7 +769,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
 
         emit("\n" + lbl3 + ":\n");
 
-        return tempreg5;
+        return tempreg4;
     }
 
     /**
@@ -780,8 +778,11 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f2 -> "length"
      */
     public String visit(ArrayLength n, String str) throws Exception {
-
-        return "int";
+        String tempreg = get_register();
+        this.returnFieldValue = true;
+        String reg = n.f0.accept(this, null);
+        emit("\t" + tempreg + " = load i32, i32* " + reg + "\n");
+        return tempreg;
     }
 
     /**
@@ -880,9 +881,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                 buffer += ", i8* " + reg;
             }
         }
-
         buffer += ")\n";
-
         emit(buffer);
 
         // Erase the array
@@ -963,6 +962,20 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                 }
                 buffer += "\t" + reg2 + " = bitcast i8* " + reg1 + " to " + llvmType + "\n";
                 emit(buffer);
+                if (this.returnFieldValue) {
+                    String tmpReg = get_register();
+                    this.returnFieldValue = false;
+                    if (results[0].equals("int")) {
+                        emit("\t" + tmpReg + " = load i32, i32* " + reg2 + "\n");
+                    } else if (results[0].equals("boolean")) {
+                        emit("\t" + tmpReg + " = load i1, i1* " + reg2 + "\n");
+                    } else if (results[0].equals("int[]")) {
+                        emit("\t" + tmpReg + " = load i32*, i32** " + reg2 + "\n");
+                    } else {
+                        emit("\t" + tmpReg + " = load i8*, i8** " + reg2 + "\n");
+                    }
+                    reg2 = tmpReg;
+                }
                 return reg2;
             }
             // Parameter or variable

@@ -450,29 +450,33 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
 
         String buffer;
 
+        returnPrimaryExpr = false;
         String identifier = n.f0.accept(this, null);
         String results[] = look_up_identifier(identifier, this.symbolTable);
 
-        String expr = n.f2.accept(this, null);
 //        System.err.println(expr);
         String llvmType;
         String targetRegister;
         if (results[1].equals("field")) {
             String reg1 = get_register();
             String reg2 = get_register();
-            emit("\n");
-            // todo na tsekarw to this an einai swsto!!!
-            buffer = "\t" + reg1 + " = getelementptr i8, i8* %this, i32 " + get_offset(identifier, results[2], this.vTables) + "\n";
+
 
             if (results[0].equals("int")) {
                 llvmType = "i32*";
             } else if (results[0].equals("boolean")) {
                 llvmType = "i1*";
-            } else if (results[0].equals("int[]")) { //TODO NA VALW oob edw!!
+            } else if (results[0].equals("int[]")) {
+//                String arrReg = get_register();
+//                emit("\tstore i32 "+ arrReg + ", i32* " + expr + "\n");
+//                expr = arrReg;
                 llvmType = "i32**";
             } else {
                 llvmType = "i8**";
             }
+            // todo na tsekarw to this an einai swsto!!!
+            buffer = "\t" + reg1 + " = getelementptr i8, i8* %this, i32 " + get_offset(identifier, results[2], this.vTables) + "\n";
+
             buffer += "\t" + reg2 + " = bitcast i8* " + reg1 + " to " + llvmType + "\n";
             targetRegister = reg2;
             emit(buffer);
@@ -491,9 +495,77 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             targetRegister = "%" + identifier;
         }
 
+        String expr = n.f2.accept(this, null);
+
         buffer = "\tstore " + llvmType.substring(0, llvmType.length() - 1) + " " + expr + ", " + llvmType + " " + targetRegister + "\n";
         emit(buffer);
         return null;
+    }
+
+    /**
+     * f0 -> Identifier()
+     * f1 -> "["
+     * f2 -> Expression()
+     * f3 -> "]"
+     * f4 -> "="
+     * f5 -> Expression()
+     * f6 -> ";"
+     */
+    public String visit(ArrayAssignmentStatement n, String str) throws Exception {
+        String lbl1 = get_bound_label();
+        String lbl2 = get_bound_label();
+        String lbl3 = get_bound_label();
+        String tempreg1 = get_register();
+        String tempreg2 = get_register();
+        String cmpReg = get_register();
+        String tempreg3 = get_register();
+        String tempreg4 = get_register();
+        String tempreg5 = get_register();
+
+
+        String reg1 = n.f0.accept(this, null);
+        String results[] = look_up_identifier(reg1, this.symbolTable);
+        String buffer;
+        if (results[1].equals("field")) {
+            String fieldReg1 = get_register();
+            String fieldReg2 = get_register();
+            String fieldReg3 = get_register();
+            buffer = "\t" + fieldReg1 + " = getelementptr i8, i8* %this, i32 " + get_offset(reg1, results[2], this.vTables) + "\n";
+            buffer += "\t" + fieldReg2 + " = bitcast i8* " + fieldReg1 + " to i32**\n";
+            buffer += "\t" + fieldReg3 + " = load i32*, i32** " + fieldReg2 + "\n";
+            tempreg1 = fieldReg3;
+            emit(buffer);
+        }
+        // Parameter or variable
+        else {
+            String varReg = get_register();
+            emit("\t" + varReg + " = load i32*, i32** %" + reg1 + "\n");
+            tempreg1 = varReg;
+        }
+        System.err.println(tempreg2);
+
+        String reg2 = n.f2.accept(this, null);
+        emit("\t" + tempreg2 + " = load i32, i32* " + tempreg1 + "\n");
+
+        emit("\t" + cmpReg + " = icmp ult i32 " + reg2 + ", " + tempreg2 + "\n");
+        emit("\tbr i1 " + cmpReg + ", label %" + lbl1 + ", label %" + lbl2 + "\n");
+
+        String reg3 = n.f5.accept(this, null);
+        emit("\n" + lbl1 + ":\n");
+        emit("\t" + tempreg3 + " = add i32 " + reg2 + ", 1\n");
+        emit("\t" + tempreg4 + " = getelementptr i32, i32* " + tempreg1 + ", i32 " + tempreg3 + "\n");
+        emit("\tstore i32 " + reg3 + ", i32* " + tempreg4 + "\n");
+
+        emit("\tbr label %" + lbl3 + "\n");
+
+        emit("\n" + lbl2 + ":\n");
+        emit("\tcall void (i32) @print_int(i32 " + tempreg2 + ")\n"); //todo!!
+        emit("\tcall void @throw_oob()\n");
+        emit("\tbr label %" + lbl3 + "\n");
+
+        emit("\n" + lbl3 + ":\n");
+
+        return tempreg4;
     }
 
     /**
@@ -668,19 +740,38 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         String lbl1 = get_bound_label();
         String lbl2 = get_bound_label();
         String lbl3 = get_bound_label();
-
+        String tempreg1 = get_register();
+        String tempreg2 = get_register();
+        String cmpReg = get_register();
+        String tempreg3 = get_register();
+        String tempreg4 = get_register();
+        String tempreg5 = get_register();
 
         String reg1 = n.f0.accept(this, null);
-        String tempreg1 = get_register();
-//        %_38 = load i32*, i32** %_37
-        emit("\t" + tempreg1 + " = load i32*, i32** " + reg1 + "\n");
-        String reg2 = n.f2.accept(this, null);
-        String tempreg2 = get_register();
-        emit("\t" + tempreg2 + " = load i32, i32* " + reg2 + "\n");
-        String cmpReg = get_register();
-        emit("\t" + cmpReg + " = icmp ult i32 " + reg2 + " " + tempreg2 + "\n");
+//        emit("\t" + tempreg1 + " = load i32*, i32** " + reg1 + "\n");
+        
+        emit("\t" + tempreg2 + " = load i32, i32* " + reg1 + "\n");
 
-        return "int";
+        String reg2 = n.f2.accept(this, null);
+
+
+        emit("\t" + cmpReg + " = icmp ult i32 " + reg2 + ", " + tempreg2 + "\n");
+        emit("\tbr i1 " + cmpReg + ", label %" + lbl1 + ", label %" + lbl2 + "\n");
+
+        emit("\n" + lbl1 + ":\n");
+        emit("\t" + tempreg3 + " = add i32 " + reg2 + ", 1\n");
+        emit("\t" + tempreg4 + " = getelementptr i32, i32* " + reg1 + ", i32 " + tempreg3 + "\n");
+        emit("\t" + tempreg5 + " = load i32, i32* " + tempreg4 + "\n");
+        emit("\tbr label %" + lbl3 + "\n");
+
+        emit("\n" + lbl2 + ":\n");
+        emit("\tcall void (i32) @print_int(i32 " + "12" + ")\n"); //todo!!
+        emit("\tcall void @throw_oob()\n");
+        emit("\tbr label %" + lbl3 + "\n");
+
+        emit("\n" + lbl3 + ":\n");
+
+        return tempreg5;
     }
 
     /**
@@ -908,20 +999,22 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         String reg1 = get_register();
         String reg2 = get_register();
         String reg3 = get_register();
-//        %_6 = icmp slt i32 %_9, 0
-//        br i1 %_6, label %arr_alloc7, label %arr_alloc8
+//        String reg4 = get_register();
+
         String reg = n.f3.accept(this, null);
         emit("\t" + cmpReg + " = icmp slt i32 " + reg + ", 0\n");
         emit("\tbr i1 " + cmpReg + ", label %" + lbl1 + ", label %" + lbl2 + "\n");
 
-        emit(lbl1 + ":\n");
+        emit("\n" + lbl1 + ":\n");
         emit("\tcall void @throw_oob()\n");
         emit("\tbr label %" + lbl2 + "\n");
 
-        emit(lbl2 + ":\n");
+        emit("\n" + lbl2 + ":\n");
         emit("\t" + reg1 + " = add i32 " + reg + ", 1\n");
         emit("\t" + reg2 + " = call i8* @calloc(i32 4, i32 " + reg1 + ")\n");
         emit("\t" + reg3 + " = bitcast i8* " + reg2 + " to i32*\n");
+        emit("\tstore i32 " + reg + ", i32* " + reg3 + "\n");
+//        emit("\tcall void (i32) @print_int(i32 "+ reg1 + ")\n"); //todo!!
         this.returnPrimaryExpr = true;
         this.registerTypes.put(reg3, "int[]");
         return reg3;

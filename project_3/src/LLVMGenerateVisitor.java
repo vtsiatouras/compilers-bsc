@@ -305,6 +305,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         this.andLabel = 0;
         this.boundsLabel = 0;
         this.arrAllocLabel = 0;
+        this.registerTypes.clear();
         return null;
     }
 
@@ -429,6 +430,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
 
         // Return
 //        emit("\n");
+        this.returnFieldValue = true;
         String retExpr = n.f10.accept(this, null);
 //        String retRegister = get_register();
 //        buffer = "\t" + retRegister + " = load " + llvmMethType + ", " + llvmMethType + "* " + retExpr + '\n';
@@ -440,6 +442,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         this.andLabel = 0;
         this.boundsLabel = 0;
         this.arrAllocLabel = 0;
+        this.registerTypes.clear();
         return null;
     }
 
@@ -450,9 +453,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f3 -> ";"
      */
     public String visit(AssignmentStatement n, String str) throws Exception {
-
         String buffer;
-
         returnPrimaryExpr = false;
         String identifier = n.f0.accept(this, null);
         String results[] = look_up_identifier(identifier, this.symbolTable);
@@ -463,8 +464,6 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         if (results[1].equals("field")) {
             String reg1 = get_register();
             String reg2 = get_register();
-
-
             if (results[0].equals("int")) {
                 llvmType = "i32*";
             } else if (results[0].equals("boolean")) {
@@ -495,6 +494,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             targetRegister = "%" + identifier;
         }
 
+        this.returnFieldValue = true;
         String expr = n.f2.accept(this, null);
 
         buffer = "\tstore " + llvmType.substring(0, llvmType.length() - 1) + " " + expr + ", " + llvmType + " " + targetRegister + "\n";
@@ -577,10 +577,11 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f6 -> Statement()
      */
     public String visit(IfStatement n, String str) throws Exception {
-        String regExpr = n.f2.accept(this, null);
         String label1 = get_if_label();
         String label2 = get_if_label();
         String label3 = get_if_label();
+        this.returnFieldValue = true;
+        String regExpr = n.f2.accept(this, null);
         emit("\tbr i1 " + regExpr + ", label %" + label1 + ", label %" + label2 + "\n");
 
         // if
@@ -803,13 +804,17 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f5 -> ")"
      */
     public String visit(MessageSend n, String str) throws Exception {
-        this.returnPrimaryExpr = true;
+//        this.returnPrimaryExpr = true;
         // Visit PrimaryExpression
         String register = n.f0.accept(this, null);
         String registerType = this.registerTypes.get(register);
         // Use current Class type if 'this' is used
         if (register.equals("%this")) {
             registerType = this.currentClass;
+        }
+        if(registerType == null) {
+            String results[] = look_up_identifier(register, this.symbolTable);
+            registerType = results[0];
         }
 
         String methName = n.f2.accept(this, null);
@@ -909,6 +914,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      */
     public String visit(ExpressionList n, String str) throws Exception {
         this.returnPrimaryExpr = false;
+        this.returnFieldValue = true;
         String register = n.f0.accept(this, null);
         this.methodArgs.add(register);
         n.f1.accept(this, null);
@@ -920,6 +926,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      * f1 -> Expression()
      */
     public String visit(ExpressionTerm n, String str) throws Exception {
+        this.returnFieldValue = true;
         this.methodArgs.add(n.f1.accept(this, null));
         return null;
     }
@@ -947,7 +954,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             return "1";
         } else if (expression.equals("false")) {
             return "0";
-        } else if (expression.equals("this")) {
+        } else if (expression.equals("%this")) {
             return "%this";
         }
         // Not primitive
@@ -985,6 +992,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                     }
                     reg2 = tmpReg;
                 }
+                this.registerTypes.put(reg2, results[0]);
                 return reg2;
             }
             // Parameter or variable
@@ -1002,6 +1010,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                 }
                 buffer += "%" + expression + "\n";
                 emit(buffer);
+                this.registerTypes.put(reg1, results[0]);
                 return reg1;
             }
         }

@@ -139,8 +139,29 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         throw new Exception("Identifier not found!");
     }
 
+    private boolean check_child_type(String type1, String type2) {
+        SymbolTable.ClassSymTable classSymTable1 = this.symbolTable.classes.get(type1);
+        SymbolTable.ClassSymTable classSymTable2 = this.symbolTable.classes.get(type2);
+        if (classSymTable2.parentClassName != null) {
+            while (classSymTable2.parentClassName != null) {
+                SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(classSymTable2.parentClassName);
+                if (parentClass.mainClass) {
+                    break;
+                }
+                if (parentClass.className.equals(classSymTable1.className)) {
+                    return true;
+                }
+                classSymTable2 = parentClass;
+            }
+        }
+        return false;
+    }
+
     private int get_method_vtable_position(String identifier, String type) throws Exception {
+        int parentsMethods = 0;
         int position = 0;
+        boolean foundAtParent = false;
+        int parentPosition = 0;
         SymbolTable.ClassSymTable classSymTable = this.symbolTable.classes.get(type);
         SymbolTable.ClassSymTable backupSymTable = classSymTable;
         if (classSymTable.parentClassName != null) {
@@ -152,20 +173,28 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                 for (Map.Entry classEntryMethods : parentClass.methods.entrySet()) {
                     String name = classEntryMethods.getKey().toString();
                     if (name.equals(identifier)) {
-                        return position;
+//                        return position;
+                        parentPosition = parentsMethods;
+                        foundAtParent = true;
                     }
-                    position++;
+//                    position++;
+                    parentsMethods++;
                     classSymTable = parentClass;
                 }
             }
         }
+        position = parentsMethods;
         classSymTable = backupSymTable;
         for (Map.Entry classEntryMethods : classSymTable.methods.entrySet()) {
             String name = classEntryMethods.getKey().toString();
             if (name.equals(identifier)) {
+                foundAtParent = false;
                 break;
             }
             position++;
+        }
+        if (foundAtParent) {
+            position = parentPosition;
         }
         return position;
     }
@@ -629,6 +658,15 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
 
         this.returnFieldValue = true;
         String expr = n.f2.accept(this, null);
+        String exprType = registerTypes.get(expr);
+
+        if (exprType != null && !results[1].equals("field") && !results[0].equals(exprType) && !results[0].equals("int")&& !results[0].equals("int[]")&& !results[0].equals("boolean") ) {
+            if(check_child_type(results[0], exprType)) {
+                SymbolTable.ClassSymTable classSymTable = this.symbolTable.classes.get(this.currentClass);
+                SymbolTable.MethodSymTable methodSymTable = classSymTable.methods.get(this.currentMethod);
+                methodSymTable.parameters.put(identifier, exprType);
+            }
+        }
 
         buffer = "\tstore " + llvmType.substring(0, llvmType.length() - 1) + " " + expr + ", " + llvmType + " " + targetRegister + "\n";
         emit(buffer);

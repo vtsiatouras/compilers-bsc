@@ -152,6 +152,19 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         return position;
     }
 
+    private int get_number_of_methods(String className, SymbolTable symbolTable) throws Exception {
+        SymbolTable.ClassSymTable classSymTable = symbolTable.classes.get(className);
+        int numberOfMethods = classSymTable.methods.size();
+        if (classSymTable.parentClassName != null) {
+            while (classSymTable.parentClassName != null) {
+                SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(classSymTable.parentClassName);
+                numberOfMethods += parentClass.methods.size();
+                classSymTable = parentClass;
+            }
+        }
+        return numberOfMethods;
+    }
+
     private int get_offset(String identifier, String type, VTables vTables) throws Exception {
         VTables.ClassVTable classVTable = vTables.classesTables.get(type);
         // Check if it is field
@@ -203,7 +216,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             }
             int numberOfFuncs = classVTable.methodsTable.size();
 //            System.err.println("num of funcs" + numberOfFuncs);
-            String buffer = "@." + className + "_vtable = global [" + numberOfFuncs + " x i8*] [";
+            String buffer = "@." + className + "_vtable = global ["; // + numberOfFuncs + " x i8*] [";
             emit(buffer);
             buffer = "";
             // Retrieve data from symbol table
@@ -213,9 +226,63 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
 //                Integer offset = Integer.parseInt(classVTableEntryFields.getValue().toString());
 //            }
             boolean printComa = false;
-            for (Map.Entry classVTableEntryMethods : classVTable.methodsTable.entrySet()) {
-                String methodName = classVTableEntryMethods.getKey().toString();
-                Integer offset = Integer.parseInt(classVTableEntryMethods.getValue().toString());
+            String extendBuffer = "";
+//            boolean extendClass = false;
+//            SymbolTable.MethodSymTable methodSymTable = classSymTable.methods.get();
+            // If you extend another class
+            if (classSymTable.parentClassName != null) {
+//                extendBuffer = "[";
+                // Check if this method is in parent class
+                while (classSymTable.parentClassName != null) {
+                    SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(classSymTable.parentClassName);
+                    classSymTable = parentClass;
+                    className = classSymTable.className;
+                    for (Map.Entry classEntryMethods : classSymTable.methods.entrySet()) {
+                        numberOfFuncs++;
+                        String methodName = classEntryMethods.getKey().toString();
+//                        Integer offset = Integer.parseInt(classVTableEntryMethods.getValue().toString());
+                        SymbolTable.MethodSymTable methodSymTable = classSymTable.methods.get(methodName);
+                        String methodRetType = methodSymTable.returnType;
+                        if (printComa) {
+                            extendBuffer += ", ";
+                        }
+                        // Return type
+                        if (methodRetType.equals("int")) {
+                            extendBuffer += "i8* bitcast (i32 (i8*";
+                        } else if (methodRetType.equals("boolean")) {
+                            extendBuffer += "i8* bitcast (i1 (i8*";
+                        } else if (methodRetType.equals("int[]")) { //todo
+                            extendBuffer += "i8* bitcast (i32* (i8*";
+                        } else {
+                            extendBuffer += "i8* bitcast (i8* (i8*";
+                        }
+                        // Set up parameters
+                        for (Map.Entry methodParams : methodSymTable.parameters.entrySet()) {
+                            String paramType = methodParams.getValue().toString();
+                            if (paramType.equals("int")) {
+                                extendBuffer += ",i32";
+                            } else if (paramType.equals("boolean")) {
+                                extendBuffer += ",i1";
+                            } else if (paramType.equals("int[]")) { //todo
+                                extendBuffer += ",i32*";
+                            } else {
+                                extendBuffer += ",i8*";
+                            }
+                        }
+                        extendBuffer += ")* @" + className + "." + methodName + " to i8*)";
+
+                        printComa = true;
+//                        emit(buffer);
+//                        buffer = "";
+                    }
+//                    extendBuffer +="]\n";
+//
+                }
+            }
+            emit(numberOfFuncs + " x i8*] [" + extendBuffer);
+            for (Map.Entry classEntryMethods : classSymTable.methods.entrySet()) {
+                String methodName = classEntryMethods.getKey().toString();
+//                Integer offset = Integer.parseInt(classEntryMethods.getValue().toString());
                 SymbolTable.MethodSymTable methodSymTable = classSymTable.methods.get(methodName);
                 String methodRetType = methodSymTable.returnType;
                 if (printComa) {
@@ -854,7 +921,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         if (register.equals("%this")) {
             registerType = this.currentClass;
         }
-        if(registerType == null) { // TODO BUG HERE!
+        if (registerType == null) { // TODO BUG HERE!
             String results[] = look_up_identifier(register, this.symbolTable);
             registerType = results[0];
         }
@@ -872,7 +939,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                     // Return your type and class name
 //                    return new String[]{parentClass.methods.get(methodName).returnType, parentClass.className};
                     classSymTable = parentClass;
-                    registerType = classSymTable.className;
+//                    registerType = classSymTable.className;
                     methodSymTable = classSymTable.methods.get(methName);
                     break;
                 }
@@ -1125,8 +1192,9 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
 //        emit("\tcall void (i32) @print_int(i32 " + 11 + ")\n"); //todo
         // Get class size and the number of methods that are contained
         int classSize = get_class_size(className, this.symbolTable);
-        VTables.ClassVTable classVTable = this.vTables.classesTables.get(className);
-        int numberOfMethods = classVTable.methodsTable.size();
+//        VTables.ClassVTable classVTable = this.vTables.classesTables.get(className);
+//        int numberOfMethods = classVTable.methodsTable.size();
+        int numberOfMethods = get_number_of_methods(className,this.symbolTable);
 
         String buffer;
         String reg1 = get_register();

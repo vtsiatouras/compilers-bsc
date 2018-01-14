@@ -37,8 +37,10 @@ class Main {
                     // Calculate offsets
                     vTables = vTables.create_v_tables(symbolTable);
                     // Create visitor for code generation, and call it.
+                    System.err.println("Compiling file...");
                     LLVMGenerateVisitor llvmVisitor = new LLVMGenerateVisitor(fileName, vTables, symbolTable);
                     root.accept(llvmVisitor, null);
+                    System.err.println("File compiled successfully");
                 } catch (Exception ex) {
                     System.err.println(ex.getMessage());
                 }

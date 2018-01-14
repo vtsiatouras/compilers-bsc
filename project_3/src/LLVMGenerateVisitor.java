@@ -146,6 +146,9 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         if (classSymTable.parentClassName != null) {
             while (classSymTable.parentClassName != null) {
                 SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(classSymTable.parentClassName);
+                if (parentClass.mainClass) {
+                    break;
+                }
                 for (Map.Entry classEntryMethods : parentClass.methods.entrySet()) {
                     String name = classEntryMethods.getKey().toString();
                     if (name.equals(identifier)) {
@@ -173,6 +176,9 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         if (classSymTable.parentClassName != null) {
             while (classSymTable.parentClassName != null) {
                 SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(classSymTable.parentClassName);
+                if (parentClass.mainClass) {
+                    break;
+                }
                 numberOfMethods += parentClass.methods.size();
                 classSymTable = parentClass;
             }
@@ -251,7 +257,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                 // Check if this method is in parent class
                 while (classSymTable.parentClassName != null) {
                     SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(classSymTable.parentClassName);
-                    if (parentClass.className.equals("main")) {
+                    if (parentClass.mainClass) {
                         break;
                     }
                     classSymTable = parentClass;

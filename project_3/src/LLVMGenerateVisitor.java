@@ -204,6 +204,8 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             int numberOfFuncs = classVTable.methodsTable.size();
 //            System.err.println("num of funcs" + numberOfFuncs);
             String buffer = "@." + className + "_vtable = global [" + numberOfFuncs + " x i8*] [";
+            emit(buffer);
+            buffer = "";
             // Retrieve data from symbol table
             SymbolTable.ClassSymTable classSymTable = this.symbolTable.classes.get(className);
 //            for (Map.Entry classVTableEntryFields : classVTable.fieldsTable.entrySet()) {
@@ -686,11 +688,13 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         String andLbl4 = get_and_label();
         String phiReg = get_register();
 
+        this.returnFieldValue = true;
         String reg1 = n.f0.accept(this, null);
         emit("\tbr label %" + andLbl1 + "\n");
         emit("\n" + andLbl1 + ":\n");
         emit("\tbr i1 " + reg1 + ", label %" + andLbl2 + ", label %" + andLbl3 + "\n");
 
+        this.returnFieldValue = true;
         emit("\n" + andLbl2 + ":\n");
         String reg2 = n.f2.accept(this, null);
         emit("\tbr label %" + andLbl3 + "\n");
@@ -858,6 +862,23 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         String methName = n.f2.accept(this, null);
         SymbolTable.ClassSymTable classSymTable = this.symbolTable.classes.get(registerType);
         SymbolTable.MethodSymTable methodSymTable = classSymTable.methods.get(methName);
+        // If you didn't found method in current class,
+        // then this method belongs to a superclass and this class is child class
+        if (methodSymTable == null && classSymTable.parentClassName != null) {
+            // Check if this method is in parent class
+            while (classSymTable.parentClassName != null) {
+                SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(classSymTable.parentClassName);
+                if (parentClass.methods.containsKey(methName)) {
+                    // Return your type and class name
+//                    return new String[]{parentClass.methods.get(methodName).returnType, parentClass.className};
+                    classSymTable = parentClass;
+                    registerType = classSymTable.className;
+                    methodSymTable = classSymTable.methods.get(methName);
+                    break;
+                }
+                classSymTable = parentClass;
+            }
+        }
         String methodType = methodSymTable.returnType;
 
         // Create an array to hold up the types of parameters

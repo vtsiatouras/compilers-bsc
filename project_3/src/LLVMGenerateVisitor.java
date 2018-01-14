@@ -139,7 +139,19 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         throw new Exception("Identifier not found!");
     }
 
-    //Todo na kanw mia offset gia methods mono!
+    private int get_method_vtable_position(String identifier, String type, VTables vTables) throws Exception {
+        int position = 0;
+        VTables.ClassVTable classVTable = vTables.classesTables.get(type);
+        for (Map.Entry classEntryMethods : classVTable.methodsTable.entrySet()) {
+            String name = classEntryMethods.getKey().toString();
+            if (name.equals(identifier)) {
+                break;
+            }
+            position++;
+        }
+        return position;
+    }
+
     private int get_offset(String identifier, String type, VTables vTables) throws Exception {
         VTables.ClassVTable classVTable = vTables.classesTables.get(type);
         // Check if it is field
@@ -148,7 +160,9 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             offset += 8;
             System.err.println(offset);
             return offset;
-        } else if (classVTable.methodsTable.containsKey(identifier)) {
+        }
+        // Deprecated
+        else if (classVTable.methodsTable.containsKey(identifier)) {
             int offset = Integer.parseInt(classVTable.methodsTable.get(identifier).toString());
             offset /= 8;
             return offset;
@@ -159,6 +173,11 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
     private int get_class_size(String className, SymbolTable symbolTable) {
         SymbolTable.ClassSymTable curClass = symbolTable.classes.get(className);
         int size = 0;
+        // If this class overrides, get parents size
+        if (curClass.parentClassName != null) {
+            size = get_class_size(curClass.parentClassName, this.symbolTable);
+        }
+
         for (Map.Entry classEntryFields : curClass.fields.entrySet()) {
             String type = classEntryFields.getValue().toString();
             if (type.equals("int")) {
@@ -319,7 +338,25 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      */
     public String visit(ClassDeclaration n, String str) throws Exception {
         this.currentClass = n.f1.accept(this, null);
+        // Visit only Methods
         n.f4.accept(this, null);
+        return null;
+    }
+
+    /**
+     * f0 -> "class"
+     * f1 -> Identifier()
+     * f2 -> "extends"
+     * f3 -> Identifier()
+     * f4 -> "{"
+     * f5 -> ( VarDeclaration() )*
+     * f6 -> ( MethodDeclaration() )*
+     * f7 -> "}"
+     */
+    public String visit(ClassExtendsDeclaration n, String str) throws Exception {
+        this.currentClass = n.f1.accept(this, null);
+        // Visit only Methods
+        n.f6.accept(this, null);
         return null;
     }
 
@@ -806,13 +843,14 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
     public String visit(MessageSend n, String str) throws Exception {
 //        this.returnPrimaryExpr = true;
         // Visit PrimaryExpression
+
         String register = n.f0.accept(this, null);
         String registerType = this.registerTypes.get(register);
         // Use current Class type if 'this' is used
         if (register.equals("%this")) {
             registerType = this.currentClass;
         }
-        if(registerType == null) {
+        if(registerType == null) { // TODO BUG HERE!
             String results[] = look_up_identifier(register, this.symbolTable);
             registerType = results[0];
         }
@@ -834,7 +872,8 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         this.methodArgs = new ArrayList<>();
 
 
-        int offset = get_offset(methName, registerType, this.vTables);
+//        int offset = get_offset(methName, registerType, this.vTables);
+        int offset = get_method_vtable_position(methName, registerType, this.vTables);
         System.err.println("offset " + offset);
         emit("\n\t; " + registerType + "." + methName + " : " + offset + "\n");
         String reg1 = get_register();
@@ -877,6 +916,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         }
         buffer += ")*\n";
         emit(buffer);
+
         // Visit parameters
         n.f4.accept(this, null);
         buffer = "\t" + reg6 + " = call " + llvmMethType + " " + reg5 + "(i8* " + register;
@@ -897,6 +937,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         }
         buffer += ")\n";
         emit(buffer);
+//        emit("\tcall void (i32) @print_int(i32 " + 12 + ")\n");
 
         // Erase the array
         this.methodArgs = null;
@@ -905,6 +946,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             this.methodArgs = new ArrayList<>(backupMethodArgs);
         }
         this.returnPrimaryExpr = false;
+        this.registerTypes.put(reg6, methodType);
         return reg6;
     }
 
@@ -1059,6 +1101,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
      */
     public String visit(AllocationExpression n, String str) throws Exception {
         String className = n.f1.accept(this, str);
+//        emit("\tcall void (i32) @print_int(i32 " + 11 + ")\n"); //todo
         // Get class size and the number of methods that are contained
         int classSize = get_class_size(className, this.symbolTable);
         VTables.ClassVTable classVTable = this.vTables.classesTables.get(className);
@@ -1072,7 +1115,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         buffer = "\t" + reg1 + " = call i8* @calloc(i32 1, i32 " + classSize + ")\n";
         buffer += "\t" + reg2 + " = bitcast i8* " + reg1 + " to i8***\n";
         buffer += "\t" + reg3 + " = getelementptr [" + numberOfMethods + " x i8*], [" + numberOfMethods + " x i8*]* @." + className + "_vtable, i32 0, i32 0\n";
-        buffer += "\tstore i8** " + reg3 + ", i8*** " + reg2;
+        buffer += "\tstore i8** " + reg3 + ", i8*** " + reg2 + "\n";
         emit(buffer);
         this.returnPrimaryExpr = true;
         this.registerTypes.put(reg1, className);

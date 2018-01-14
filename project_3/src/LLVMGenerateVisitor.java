@@ -139,10 +139,25 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
         throw new Exception("Identifier not found!");
     }
 
-    private int get_method_vtable_position(String identifier, String type, VTables vTables) throws Exception {
+    private int get_method_vtable_position(String identifier, String type) throws Exception {
         int position = 0;
-        VTables.ClassVTable classVTable = vTables.classesTables.get(type);
-        for (Map.Entry classEntryMethods : classVTable.methodsTable.entrySet()) {
+        SymbolTable.ClassSymTable classSymTable = this.symbolTable.classes.get(type);
+        SymbolTable.ClassSymTable backupSymTable = classSymTable;
+        if (classSymTable.parentClassName != null) {
+            while (classSymTable.parentClassName != null) {
+                SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(classSymTable.parentClassName);
+                for (Map.Entry classEntryMethods : parentClass.methods.entrySet()) {
+                    String name = classEntryMethods.getKey().toString();
+                    if (name.equals(identifier)) {
+                        return position;
+                    }
+                    position++;
+                    classSymTable = parentClass;
+                }
+            }
+        }
+        classSymTable = backupSymTable;
+        for (Map.Entry classEntryMethods : classSymTable.methods.entrySet()) {
             String name = classEntryMethods.getKey().toString();
             if (name.equals(identifier)) {
                 break;
@@ -221,6 +236,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
             buffer = "";
             // Retrieve data from symbol table
             SymbolTable.ClassSymTable classSymTable = this.symbolTable.classes.get(className);
+            SymbolTable.ClassSymTable backupSymTable = classSymTable;
 //            for (Map.Entry classVTableEntryFields : classVTable.fieldsTable.entrySet()) {
 //                String fieldName = classVTableEntryFields.getKey().toString();
 //                Integer offset = Integer.parseInt(classVTableEntryFields.getValue().toString());
@@ -235,6 +251,9 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                 // Check if this method is in parent class
                 while (classSymTable.parentClassName != null) {
                     SymbolTable.ClassSymTable parentClass = symbolTable.classes.get(classSymTable.parentClassName);
+                    if (parentClass.className.equals("main")) {
+                        break;
+                    }
                     classSymTable = parentClass;
                     className = classSymTable.className;
                     for (Map.Entry classEntryMethods : classSymTable.methods.entrySet()) {
@@ -280,6 +299,8 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
                 }
             }
             emit(numberOfFuncs + " x i8*] [" + extendBuffer);
+            classSymTable = backupSymTable;
+            className = classSymTable.className;
             for (Map.Entry classEntryMethods : classSymTable.methods.entrySet()) {
                 String methodName = classEntryMethods.getKey().toString();
 //                Integer offset = Integer.parseInt(classEntryMethods.getValue().toString());
@@ -961,7 +982,7 @@ public class LLVMGenerateVisitor extends GJDepthFirst<String, String> {
 
 
 //        int offset = get_offset(methName, registerType, this.vTables);
-        int offset = get_method_vtable_position(methName, registerType, this.vTables);
+        int offset = get_method_vtable_position(methName, registerType);
         System.err.println("offset " + offset);
         emit("\n\t; " + registerType + "." + methName + " : " + offset + "\n");
         String reg1 = get_register();

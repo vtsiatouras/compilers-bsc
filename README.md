@@ -58,7 +58,7 @@ The parser, based on a context-free grammar, will translate the input language i
 
 #### Examples of the input language
 
-```
+```javascript
 name()  {
     "John"
 }

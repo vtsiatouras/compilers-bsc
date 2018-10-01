@@ -76,7 +76,7 @@ surname()
 fullname(name(), " ", surname())
 ```
 
-```
+```javascript
 name() {
     "John"
 }
@@ -96,7 +96,7 @@ condRepeat("yes", name())
 condRepeat("no", "Jane")
 ```
 
-```
+```javascript
 findLangType(langName) {
     if (langName = "Java")
         "Static"

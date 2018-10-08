@@ -1,5 +1,7 @@
 # Compilers
 
+Copyright (C) 2018 Vangelis Tsiatouras
+
 ## About
 
 This repository contains the assignments for the course Compilers (k31) of DIT-NKUA.
